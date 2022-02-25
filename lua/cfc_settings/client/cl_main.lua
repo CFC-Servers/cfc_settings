@@ -40,8 +40,7 @@ local function addSlider( panel, text, cname, decimal )
 end
 
 local function handleOptions( panel, cmd, info )
-    local convar = GetConVar( cname )
-    if not convar then return end
+    if not GetConVar( cmd ) then return end
 
     -- Toggle convars
     if info.type == "bool" then

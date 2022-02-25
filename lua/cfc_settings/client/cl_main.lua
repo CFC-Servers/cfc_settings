@@ -15,8 +15,6 @@ end
 
 local function addBool( panel, text, cname )
     local convar = GetConVar( cname )
-    if not convar then return end
-
     local checkBox = panel:Add( "DCheckBoxLabel" )
     checkBox:Dock( TOP )
     checkBox:DockMargin( 10, 0, 0, 5 )
@@ -29,8 +27,6 @@ end
 
 local function addSlider( panel, text, cname, decimal )
     local convar = GetConVar( cname )
-    if not convar then return end
-
     local distanceSlider = vgui.Create( "DNumSlider", panel )
     distanceSlider:Dock( TOP )
     distanceSlider:DockMargin( 5, 5, 0, 0 )
@@ -44,13 +40,16 @@ local function addSlider( panel, text, cname, decimal )
 end
 
 local function handleOptions( panel, cmd, info )
+    local convar = GetConVar( cname )
+    if not convar then return end
+
     -- Toggle convars
-    if info.bool then
+    if info.type == "bool" then
         addBool( panel, info.displayName, cmd )
         return
     end
     -- Convars with multiple values
-    if info.slider then
+    if info.type == "slider" then
         addSlider( panel, info.displayName, cmd, info.decimals )
         return
     end

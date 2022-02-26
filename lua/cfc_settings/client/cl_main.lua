@@ -3,6 +3,7 @@ VGUI Options menu
 ---------------------------------------------------------------------------]]
 local settingsMenu
 local isValid = IsValid
+local GetConVar = GetConVar
 
 local convarTable = include( "cfc_settings/client/cl_config.lua" )
 
@@ -55,14 +56,20 @@ local function handleOptions( panel, cmd, info )
 end
 
 local function configHandler( panel, tbl  )
-    for _, val in ipairs( tbl ) do
-        -- Titles
-        if isstring( val ) then
-            addLabel( panel, val )
+    for title, sub in pairs( tbl ) do
+        -- Check if convars exist
+        local validConvars = 0
+        for cmd in pairs( sub ) do
+            if GetConVar( cmd ) then
+                validConvars = validConvars + 1
+            end
         end
-        -- Settings tables
-        if istable( val ) then
-            for cmd, info in pairs( val ) do
+        -- Only add title if convars exist
+        if validConvars ~= 0 then
+            -- Title
+            addLabel( panel, title )
+            -- Settings table
+            for cmd, info in pairs( sub ) do
                 handleOptions( panel, cmd, info )
             end
         end

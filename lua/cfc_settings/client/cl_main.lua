@@ -19,7 +19,7 @@ local function addBool( panel, text, cname )
     local checkBox = panel:Add( "DCheckBoxLabel" )
     checkBox:Dock( TOP )
     checkBox:DockMargin( 10, 0, 0, 5 )
-    checkBox:SetText( text )
+    checkBox:SetText( text or cname )
     checkBox:SetValue( convar:GetBool() )
     checkBox:SetTooltip( convar:GetHelpText() )
     checkBox:SetConVar( cname )
@@ -55,22 +55,24 @@ local function handleOptions( panel, cmd, info )
     end
 end
 
-local function configHandler( panel, tbl  )
-    for title, sub in pairs( tbl ) do
-        -- Check if convars exist
-        local validConvars = 0
-        for cmd in pairs( sub ) do
-            if GetConVar( cmd ) then
-                validConvars = validConvars + 1
+local function configHandler( panel, config  )
+    for _, tbl in ipairs ( config ) do
+        for title, sub in pairs( tbl ) do
+            -- Check if convars exist
+            local validConvars = 0
+            for cmd in pairs( sub ) do
+                if GetConVar( cmd ) then
+                    validConvars = validConvars + 1
+                end
             end
-        end
-        -- Only add title if convars exist
-        if validConvars ~= 0 then
-            -- Title
-            addLabel( panel, title )
-            -- Settings table
-            for cmd, info in pairs( sub ) do
-                handleOptions( panel, cmd, info )
+            -- Only add title if convars exist
+            if validConvars ~= 0 then
+                -- Title
+                addLabel( panel, title )
+                -- Settings table
+                for cmd, info in pairs( sub ) do
+                    handleOptions( panel, cmd, info )
+                end
             end
         end
     end

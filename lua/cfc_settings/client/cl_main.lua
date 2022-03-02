@@ -4,6 +4,7 @@ VGUI Options menu
 local settingsMenu
 local isValid = IsValid
 local GetConVar = GetConVar
+local uiColor = Color( 36, 41, 67 )
 
 local convarTable = include( "cfc_settings/client/cl_config.lua" )
 
@@ -155,6 +156,10 @@ local function toggleSettingsMenu()
 
     settingsMenu:InvalidateLayout( true )
     settingsMenu:SizeToChildren( true, true )
+
+    function settingsMenu:Paint( w, h )
+        draw.RoundedBox(    , 0, 0, w, h, uiColor )
+    end
 end
 
 hook.Add( "OnPlayerChat", "NotShitSettings", function( ply, text )

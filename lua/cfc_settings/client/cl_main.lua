@@ -32,7 +32,7 @@ local function addSlider( panel, text, cname, decimal )
     local convar = GetConVar( cname )
     local distanceSlider = vgui.Create( "DNumSlider", panel )
     distanceSlider:Dock( TOP )
-    distanceSlider:DockMargin( 5, 5, 0, 0 )
+    distanceSlider:DockMargin( 10, -10, 0, 0 )
     distanceSlider:SetText( text )
     distanceSlider:SetMin( convar:GetMin() )
     distanceSlider:SetMax( convar:GetMax() )
@@ -73,7 +73,7 @@ local function addFunctionSlider( panel, info )
 
     local distanceSlider = vgui.Create( "DNumSlider", panel )
     distanceSlider:Dock( TOP )
-    distanceSlider:DockMargin( 5, 5, 0, 0 )
+    distanceSlider:DockMargin( 10, -10, 0, 0 )
     distanceSlider:SetText( text )
     distanceSlider:SetMin( min )
     distanceSlider:SetMax( max )
@@ -115,22 +115,26 @@ local function handleOptions( panel, action, info )
     end
 end
 
+-- Parses the config table and generates vgui elements from it.
 local function configHandler( panel, config  )
     for _, tbl in ipairs ( config ) do
-        for title, sub in pairs( tbl ) do
-            -- Check if convars or functions exist
+        for title, subtbl in pairs( tbl ) do
+            -- Check if convars or functions exist, has to happen before options get added for each block.
             local valid = 0
-            for action in pairs( sub ) do
-                if GetConVar( action ) or isfunction( action ) then
-                    valid = valid + 1
+            for _, settingtbl in ipairs( subtbl ) do
+                for action, info in pairs( settingtbl ) do
+                    if GetConVar( action ) or ( isfunction( info.exists ) and info.exists() ) then
+                        valid = valid + 1
+                    end
                 end
             end
             -- Only add title if convars exist
             if valid ~= 0 then
-                -- Title
                 addLabel( panel, title )
+            end
+            for _, settingTbl in ipairs( subtbl ) do
                 -- Settings table
-                for action, info in pairs( sub ) do
+                for action, info in pairs( settingTbl ) do
                     handleOptions( panel, action, info )
                 end
             end

@@ -19,6 +19,23 @@ local settingsTable = {
     },
     [3] = {
         ["Other addons:"] = {
+            acf_volume = {
+                type = "sliderfunction",
+                decimals = 2,
+                displayName = "ACF Volume",
+                tooltip = "Sets the ACF volume",
+                exists = function()
+                    return ACF
+                end,
+                setfunc = function( val )
+                    ACF.Volume = val
+                end,
+                getfunc = function()
+                    return ACF.Volume
+                end,
+                min = 0,
+                max = 1
+            },
             m9k_zoomtoggle = { type = "bool", displayName = "M9K zoom toggle" },
             custom_hitmarkers_enabled = { type = "bool", displayName = "Enable hitmarkers" },
             physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" }

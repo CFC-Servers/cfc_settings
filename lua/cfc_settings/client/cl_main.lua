@@ -14,6 +14,7 @@ local function addLabel( panel, text )
     label:SetText( text )
 end
 
+-- Convar settings
 local function addBool( panel, text, cname )
     local convar = GetConVar( cname )
     local checkBox = panel:Add( "DCheckBoxLabel" )
@@ -40,17 +41,73 @@ local function addSlider( panel, text, cname, decimal )
     distanceSlider:SetConVar( cname )
 end
 
-local function handleOptions( panel, cmd, info )
-    if not GetConVar( cmd ) then return end
+-- Custom function settings
+local function addFunctionBool( panel, info )
+    local text = info.displayName
+    local setfunc = info.setfunc
+    local getfunc = info.getfunc
+    local tooltip = info.tooltip
 
+    local checkBox = panel:Add( "DCheckBoxLabel" )
+    checkBox:Dock( TOP )
+    checkBox:DockMargin( 10, 0, 0, 5 )
+    checkBox:SetText( text or cname )
+    checkBox:SetValue( getfunc() )
+    checkBox:SetTooltip( tooltip )
+    checkBox:SizeToContents()
+
+    function checkBox:OnChange( value )
+        setfunc( value ) -- Expect a boolean
+    end
+end
+
+local function addFunctionSlider( panel, info )
+    local max = info.max
+    local min = info.min
+    local text = info.displayName
+    local decimals = info.decimals
+    local setfunc = info.setfunc
+    local getfunc = info.getfunc
+    local tooltip = info.tooltip
+
+    local distanceSlider = vgui.Create( "DNumSlider", panel )
+    distanceSlider:Dock( TOP )
+    distanceSlider:DockMargin( 5, 5, 0, 0 )
+    distanceSlider:SetText( text )
+    distanceSlider:SetMin( min )
+    distanceSlider:SetMax( max )
+    distanceSlider:SetValue( getfunc() )
+    distanceSlider:SetDecimals( decimals or 0 )
+    distanceSlider:SetTooltip( tooltip )
+
+    function distanceSlider:OnValueChanged( value )
+        setfunc( value )
+    end
+end
+
+local function handleOptions( panel, action, info )
     -- Toggle convars
     if info.type == "bool" then
-        addBool( panel, info.displayName, cmd )
+        if not GetConVar( action ) then return end
+        addBool( panel, info.displayName, action )
         return
     end
     -- Convars with multiple values
     if info.type == "slider" then
-        addSlider( panel, info.displayName, cmd, info.decimals )
+        if not GetConVar( action ) then return end
+        addSlider( panel, info.displayName, action, info.decimals )
+        return
+    end
+
+    if info.type == "sliderfunction" then
+        if not info.exists() then return end
+        addFunctionSlider( panel, info )
+        return
+    end
+
+    if info.type == "sliderbool" then
+        if not info.exist() then return end
+        addFunctionBool( panel, info )
         return
     end
 end
@@ -58,20 +115,20 @@ end
 local function configHandler( panel, config  )
     for _, tbl in ipairs ( config ) do
         for title, sub in pairs( tbl ) do
-            -- Check if convars exist
-            local validConvars = 0
-            for cmd in pairs( sub ) do
-                if GetConVar( cmd ) then
-                    validConvars = validConvars + 1
+            -- Check if convars or functions exist
+            local valid = 0
+            for action in pairs( sub ) do
+                if GetConVar( action ) or isfunction( action ) then
+                    valid = valid + 1
                 end
             end
             -- Only add title if convars exist
-            if validConvars ~= 0 then
+            if valid ~= 0 then
                 -- Title
                 addLabel( panel, title )
                 -- Settings table
-                for cmd, info in pairs( sub ) do
-                    handleOptions( panel, cmd, info )
+                for action, info in pairs( sub ) do
+                    handleOptions( panel, action, info )
                 end
             end
         end

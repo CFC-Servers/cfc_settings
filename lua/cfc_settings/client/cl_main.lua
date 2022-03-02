@@ -158,7 +158,7 @@ local function toggleSettingsMenu()
     settingsMenu:SizeToChildren( true, true )
 
     function settingsMenu:Paint( w, h )
-        draw.RoundedBox(    , 0, 0, w, h, uiColor )
+        draw.RoundedBox( 8, 0, 0, w, h, uiColor )
     end
 end
 

@@ -51,7 +51,7 @@ local function addFunctionBool( panel, info )
     local checkBox = panel:Add( "DCheckBoxLabel" )
     checkBox:Dock( TOP )
     checkBox:DockMargin( 10, 0, 0, 5 )
-    checkBox:SetText( text or cname )
+    checkBox:SetText( text )
     checkBox:SetValue( getfunc() )
     checkBox:SetTooltip( tooltip )
     checkBox:SizeToContents()
@@ -99,12 +99,14 @@ local function handleOptions( panel, action, info )
         return
     end
 
+    -- Function boolean
     if info.type == "sliderfunction" then
         if not info.exists() then return end
         addFunctionSlider( panel, info )
         return
     end
 
+    -- Function slider
     if info.type == "sliderbool" then
         if not info.exist() then return end
         addFunctionBool( panel, info )

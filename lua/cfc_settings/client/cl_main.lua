@@ -143,8 +143,8 @@ local function configHandler( panel, config  )
 end
 
 local function toggleSettingsMenu()
-    if isValid( settingsMenu ) then
-        settingsMenu:Remove()
+    if isValid( settingsMenu ) and ispanel( settingsMenu ) then
+        settingsMenu:ToggleVisible()
         return
     end
 
@@ -154,6 +154,7 @@ local function toggleSettingsMenu()
     settingsMenu:SetTitle( "Settings:" )
     settingsMenu:MakePopup()
     settingsMenu:SetKeyboardInputEnabled( false )
+    settingsMenu:SetDeleteOnClose( false )
 
      -- "Parse" the config table
     configHandler( settingsMenu, convarTable )
@@ -166,7 +167,7 @@ local function toggleSettingsMenu()
     end
 end
 
-hook.Add( "OnPlayerChat", "NotShitSettings", function( ply, text )
+hook.Add( "OnPlayerChat", "CFCSettingsHideCommand", function( ply, text )
     local lower = string.lower( text ) -- make the string lower case
     if lower ~= "!settings" then return end
     if ply == LocalPlayer() then

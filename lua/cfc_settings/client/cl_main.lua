@@ -100,15 +100,15 @@ local function handleOptions( panel, action, info )
         return
     end
 
-    -- Function boolean
+    -- Function slider
     if info.type == "sliderfunction" then
         if not info.exists() then return end
         addFunctionSlider( panel, info )
         return
     end
 
-    -- Function slider
-    if info.type == "sliderbool" then
+    -- Function bool
+    if info.type == "boolfunction" then
         if not info.exist() then return end
         addFunctionBool( panel, info )
         return

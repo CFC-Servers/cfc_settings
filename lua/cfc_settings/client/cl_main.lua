@@ -16,21 +16,23 @@ local function addLabel( panel, text )
 end
 
 -- Convar settings
-local function addBool( panel, text, cname )
+local function addBool( panel, text, cname, tooltip )
     local convar = GetConVar( cname )
     local checkBox = panel:Add( "DCheckBoxLabel" )
+    local tooltip = tooltip or convar:GetHelpText()
     checkBox:Dock( TOP )
     checkBox:DockMargin( 10, 0, 0, 5 )
     checkBox:SetText( text or cname )
     checkBox:SetValue( convar:GetBool() )
-    checkBox:SetTooltip( convar:GetHelpText() )
+    checkBox:SetTooltip( tooltip ~= "" and tooltip )
     checkBox:SetConVar( cname )
     checkBox:SizeToContents()
 end
 
-local function addSlider( panel, text, cname, decimal )
+local function addSlider( panel, text, cname, decimal, tooltip )
     local convar = GetConVar( cname )
     local distanceSlider = vgui.Create( "DNumSlider", panel )
+    local tooltip = tooltip or convar:GetHelpText()
     distanceSlider:Dock( TOP )
     distanceSlider:DockMargin( 10, -10, 0, 0 )
     distanceSlider:SetText( text )
@@ -38,7 +40,7 @@ local function addSlider( panel, text, cname, decimal )
     distanceSlider:SetMax( convar:GetMax() )
     distanceSlider:SetValue( convar:GetFloat() )
     distanceSlider:SetDecimals( decimal or 0 )
-    distanceSlider:SetTooltip( convar:GetHelpText() )
+    distanceSlider:SetTooltip( tooltip ~= "" and tooltip )
     distanceSlider:SetConVar( cname )
 end
 
@@ -115,13 +117,13 @@ local function handleOptions( panel, action, info )
     -- Toggle convars
     if info.type == "bool" then
         if not GetConVar( action ) then return end
-        addBool( panel, info.displayName, action )
+        addBool( panel, info.displayName, action, info.tooltip )
         return
     end
     -- Convars with multiple values
     if info.type == "slider" then
         if not GetConVar( action ) then return end
-        addSlider( panel, info.displayName, action, info.decimals )
+        addSlider( panel, info.displayName, action, info.decimals, info.tooltip )
         return
     end
 

@@ -5,13 +5,36 @@ local settingsMenu
 local isValid = IsValid
 local GetConVar = GetConVar
 local uiColor = Color( 36, 41, 67 )
+local txtColor = Color( 210, 210, 210, 255 )
+local btnColor = Color( 42, 47, 74, 255 )
+local btnHoverColor = Color( 35, 42, 69, 255 )
+local btnPressColor = Color( 83, 227, 251, 255 )
+local btnBorderColor = Color( 255, 255, 255, 255 )
+local btnTxtColor = Color( 210, 210, 210, 255 )
 
 local convarTable = include( "cfc_settings/client/cl_config.lua" )
+
+local function paintButton( panel )
+    panel:SetTextColor( btnTxtColor )
+
+    panel.Paint = function( self, w, h )
+        draw.RoundedBox( 0, 0, 0, w, h, btnBorderColor )
+
+        if self:IsDown( ) then
+            draw.RoundedBox( 0, 1, 1, w - 2, h - 2, btnPressColor )
+        elseif self:IsHovered( ) then
+            draw.RoundedBox( 0, 1, 1, w - 2, h - 2, btnHoverColor )
+        else
+            draw.RoundedBox( 0, 1, 1, w - 2, h - 2, btnColor )
+        end
+    end
+end
 
 local function addLabel( panel, text )
     local label = vgui.Create( "DLabel", panel )
     label:Dock( TOP )
     label:DockMargin( 5, 0, 0, 0 )
+    label:SetTextColor( txtColor )
     label:SetText( text )
 end
 
@@ -22,6 +45,7 @@ local function addBool( panel, text, cname, tooltip )
     local tooltip = tooltip or convar:GetHelpText()
     checkBox:Dock( TOP )
     checkBox:DockMargin( 10, 0, 0, 5 )
+    checkBox:SetTextColor( txtColor )
     checkBox:SetText( text or cname )
     checkBox:SetValue( convar:GetBool() )
     checkBox:SetTooltip( tooltip ~= "" and tooltip )
@@ -35,6 +59,7 @@ local function addSlider( panel, text, cname, decimal, tooltip )
     local tooltip = tooltip or convar:GetHelpText()
     distanceSlider:Dock( TOP )
     distanceSlider:DockMargin( 10, -10, 0, 0 )
+    distanceSlider:GetChildren()[3]:SetTextColor( txtColor )
     distanceSlider:SetText( text )
     distanceSlider:SetMin( convar:GetMin() or 0 )
     distanceSlider:SetMax( convar:GetMax() or 1 )
@@ -54,6 +79,7 @@ local function addFunctionBool( panel, info )
     local checkBox = panel:Add( "DCheckBoxLabel" )
     checkBox:Dock( TOP )
     checkBox:DockMargin( 10, 0, 0, 5 )
+    checkBox:SetTextColor( txtColor )
     checkBox:SetText( text )
     checkBox:SetValue( getfunc() )
     checkBox:SetTooltip( tooltip )
@@ -76,6 +102,7 @@ local function addFunctionSlider( panel, info )
     local distanceSlider = vgui.Create( "DNumSlider", panel )
     distanceSlider:Dock( TOP )
     distanceSlider:DockMargin( 10, -10, 0, 0 )
+    distanceSlider:GetChildren()[3]:SetTextColor( txtColor )
     distanceSlider:SetText( text )
     distanceSlider:SetMin( min )
     distanceSlider:SetMax( max )
@@ -99,14 +126,17 @@ local function addFunctionButton( panel, info )
     btn:Dock( TOP )
     
     if isSub then
-        btn:DockMargin( 20, 0, 20, 5 )
+        btn:DockMargin( 35, 0, 30, 10 )
     else
-        btn:DockMargin( 10, 0, 10, 5 )
+        btn:DockMargin( 10, 0, 10, 10 )
     end
 
+    btn:SetTextColor( txtColor )
     btn:SetText( text )
     btn:SetTooltip( tooltip )
-    btn:SizeToContents()
+    btn:SizeToContentsX()
+    btn:SizeToContentsY( 7 )
+    paintButton( btn )
 
     function btn:DoClick()
         if not leftfunc then return end

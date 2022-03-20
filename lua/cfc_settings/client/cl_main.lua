@@ -86,6 +86,31 @@ local function addFunctionSlider( panel, info )
     end
 end
 
+local function addFunctionButton( panel, info )
+    local text = info.displayName
+    local leftfunc = info.leftfunc
+    local rightfunc = info.rightfunc
+    local tooltip = info.tooltip
+
+    local btn = panel:Add( "DButton" )
+    btn:Dock( TOP )
+    btn:DockMargin( 20, 0, 20, 5 )
+    btn:SetText( text )
+    btn:SetTooltip( tooltip )
+    btn:SizeToContents()
+
+    function btn:DoClick()
+        if not leftfunc then return end
+        leftfunc()
+    end
+
+    function btn:DoRightClick()
+        if not rightfunc then return end
+        rightfunc()
+    end
+end
+
+-- Option handler
 local function handleOptions( panel, action, info )
     -- Toggle convars
     if info.type == "bool" then
@@ -111,6 +136,13 @@ local function handleOptions( panel, action, info )
     if info.type == "boolfunction" then
         if not info.exist() then return end
         addFunctionBool( panel, info )
+        return
+    end
+
+    -- Function button
+    if info.type == "button" then
+        if not info.exist() then return end
+        addFunctionButton( panel, info )
         return
     end
 end

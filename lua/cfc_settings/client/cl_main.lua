@@ -155,7 +155,7 @@ local function configHandler( panel, config  )
             local valid = 0
             for _, settingtbl in ipairs( subtbl ) do
                 for action, info in pairs( settingtbl ) do
-                    if GetConVar( action ) or ( isfunction( info.exists ) and info.exists() ) then
+                    if ( isfunction( info.exists ) and info.exists() ) or GetConVar( action ) then
                         valid = valid + 1
                     end
                 end

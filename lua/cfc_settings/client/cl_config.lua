@@ -142,11 +142,13 @@ local settingsTable = {
                 leftfunc = function()
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "custom_propinfo", true )
+                    flashPanel( controlpanel.Get( "custom_propinfo" ), true )
                 end,
                 rightfunc = function( settingsMenu )
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "custom_propinfo", true )
                     settingsMenu:SetVisible( false )
+                    flashPanel( controlpanel.Get( "custom_propinfo" ), true )
                 end,
             } },
             { physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" } },

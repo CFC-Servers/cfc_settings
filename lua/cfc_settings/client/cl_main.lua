@@ -93,10 +93,17 @@ local function addFunctionButton( panel, info )
     local leftfunc = info.leftfunc
     local rightfunc = info.rightfunc
     local tooltip = info.tooltip
+    local isSub = info.issub
 
     local btn = panel:Add( "DButton" )
     btn:Dock( TOP )
-    btn:DockMargin( 20, 0, 20, 5 )
+    
+    if isSub then
+        btn:DockMargin( 20, 0, 20, 5 )
+    else
+        btn:DockMargin( 10, 0, 10, 5 )
+    end
+
     btn:SetText( text )
     btn:SetTooltip( tooltip )
     btn:SizeToContents()

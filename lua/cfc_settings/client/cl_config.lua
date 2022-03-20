@@ -64,6 +64,7 @@ local settingsTable = {
                 type = "button",
                 displayName = "Open Hitmarkers config",
                 tooltip = "Opens more options\nRight click will auto-close this menu",
+                issub = true,
                 exists = function()
                     return istable( CustomHitmarkers )
                 end,
@@ -84,6 +85,7 @@ local settingsTable = {
                 type = "button",
                 displayName = "Open Prop Info config",
                 tooltip = "Opens more options\nRight click will auto-close this menu",
+                issub = true,
                 exists = function()
                     return istable( CustomPropInfo )
                 end,

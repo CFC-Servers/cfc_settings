@@ -1,28 +1,28 @@
 -- Main formatting table
 local settingsTable = {
-    [1] = {
+    {
         ["Frequently used settings:"] = {
-            [1] = { proximity_voice_enabled = { type = "bool", displayName = "Enable proximity voice" } },
-            [2] = { pac_enable = { type = "bool", displayName = "Enable pac" } },
+            { proximity_voice_enabled = { type = "bool", displayName = "Enable proximity voice" } },
+            { pac_enable = { type = "bool", displayName = "Enable pac" } },
         }
     },
-    [2] = {
+    {
         ["CFC Specific Settings:"] = {
-            [1] = { streamcore_disable = { type = "bool", displayName = "Disable streamcore" } },
-            [2] = { cfc_painsounds_enabled = { type = "bool", displayName = "Enable painsounds" } },
-            [3] = { cfc_pvp_transparent_builders = { type = "bool", displayName = "Enable transparent builders in pvp" } },
-            [4] = { cfc_tpa_disable = { type = "bool", displayName = "Disable tpa requests" } },
-            [5] = { cfc_punt_enabled = { type = "bool", displayName = "Enable punt sounds" } },
-            [6] = { voicebalancer_enabled = { type = "bool", displayName = "Enable voice balancer" } },
-            [7] = { cfc_pvp_acf_screenshake_intensity = { type = "slider", decimals = 2, displayName = "ACF Screenshake" } },
+            { streamcore_disable = { type = "bool", displayName = "Disable streamcore" } },
+            { cfc_painsounds_enabled = { type = "bool", displayName = "Enable painsounds" } },
+            { cfc_pvp_transparent_builders = { type = "bool", displayName = "Enable transparent builders in pvp" } },
+            { cfc_tpa_disable = { type = "bool", displayName = "Disable tpa requests" } },
+            { cfc_punt_enabled = { type = "bool", displayName = "Enable punt sounds" } },
+            { voicebalancer_enabled = { type = "bool", displayName = "Enable voice balancer" } },
+            { cfc_pvp_acf_screenshake_intensity = { type = "slider", decimals = 2, displayName = "ACF Screenshake" } },
         }
     },
-    [3] = {
+    {
         ["Other addons:"] = {
-            [1] = { m9k_zoomtoggle = { type = "bool", displayName = "M9K zoom toggle" } },
-            [2] = { custom_hitmarkers_enabled = { type = "bool", displayName = "Enable hitmarkers" } },
-            [3] = { physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" } },
-            [4] = { acf_volume = {
+            { m9k_zoomtoggle = { type = "bool", displayName = "M9K zoom toggle" } },
+            { custom_hitmarkers_enabled = { type = "bool", displayName = "Enable hitmarkers" } },
+            { physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" } },
+            { acf_volume = {
                 type = "sliderfunction",
                 decimals = 2,
                 displayName = "ACF Volume",

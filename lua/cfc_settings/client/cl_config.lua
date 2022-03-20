@@ -2,9 +2,9 @@
 local settingsTable = {
     {
         ["Frequently used settings:"] = {
-            { proximity_voice_enabled = { type = "bool", displayName = "Enable proximity voice" } },
-            { pac_enable = { type = "bool", displayName = "Enable PAC3" } },
-            { pac_request_outfits = {
+            [1] = { proximity_voice_enabled = { type = "bool", displayName = "Enable proximity voice" } },
+            [2] = { pac_enable = { type = "bool", displayName = "Enable PAC3" } },
+            [3] = { pac_request_outfits = {
                 type = "button",
                 displayName = "Request PAC3 outfits",
                 tooltip = "Reacquire PACs that may not have worn correctly",
@@ -19,7 +19,7 @@ local settingsTable = {
                     LocalPlayer():ConCommand( "pac_request_outfits" )
                 end,
             } },
-            { fpp_openbuddies = {
+            [4] = { fpp_openbuddies = {
                 type = "button",
                 displayName = "Open FPP buddy settings",
                 tooltip = "Opens more options\nRight click will auto-close this menu",
@@ -41,20 +41,20 @@ local settingsTable = {
     },
     {
         ["CFC Specific Settings:"] = {
-            { streamcore_disable = { type = "bool", displayName = "Disable streamcore" } },
-            { cfc_painsounds_enabled = { type = "bool", displayName = "Enable painsounds" } },
-            { cfc_pvp_transparent_builders = { type = "bool", displayName = "Enable transparent builders in pvp" } },
-            { cfc_tpa_disable = { type = "bool", displayName = "Disable tpa requests" } },
-            { cfc_punt_enabled = { type = "bool", displayName = "Enable punt sounds" } },
-            { voicebalancer_enabled = { type = "bool", displayName = "Enable voice balancer" } },
-            { cfc_pvp_acf_screenshake_intensity = { type = "slider", decimals = 2, displayName = "ACF screenshake" } },
+            [1] = { streamcore_disable = { type = "bool", displayName = "Disable streamcore" } },
+            [2] = { cfc_painsounds_enabled = { type = "bool", displayName = "Enable painsounds" } },
+            [3] = { cfc_pvp_transparent_builders = { type = "bool", displayName = "Enable transparent builders in pvp" } },
+            [4] = { cfc_tpa_disable = { type = "bool", displayName = "Disable tpa requests" } },
+            [5] = { cfc_punt_enabled = { type = "bool", displayName = "Enable punt sounds" } },
+            [6] = { voicebalancer_enabled = { type = "bool", displayName = "Enable voice balancer" } },
+            [7] = { cfc_pvp_acf_screenshake_intensity = { type = "slider", decimals = 2, displayName = "ACF screenshake" } },
         }
     },
     {
         ["Other addons:"] = {
-            { m9k_zoomtoggle = { type = "bool", displayName = "M9K zoom toggle" } },
-            { sitting_disallow_on_me = { type = "bool", displayName = "Dissallow players sitting on you" } },
-            { betterchat_enable = {
+            [1] = { m9k_zoomtoggle = { type = "bool", displayName = "M9K zoom toggle" } },
+            [2] = { sitting_disallow_on_me = { type = "bool", displayName = "Dissallow players sitting on you" } },
+            [3] = { betterchat_enable = {
                 type = "boolfunction",
                 displayName = "Enable Betterchat",
                 tooltip = "Enables Betterchat",
@@ -68,8 +68,8 @@ local settingsTable = {
                     return bc.base.enabled
                 end
             } },
-            { custom_hitmarkers_enabled = { type = "bool", displayName = "Enable hitmarkers" } },
-            { custom_hitmarkers_openmenu = {
+            [4] = { custom_hitmarkers_enabled = { type = "bool", displayName = "Enable hitmarkers" } },
+            [5] = { custom_hitmarkers_openmenu = {
                 type = "button",
                 displayName = "Open Hitmarkers config",
                 tooltip = "Opens more options\nRight click will auto-close this menu",
@@ -87,8 +87,8 @@ local settingsTable = {
                     settingsMenu:SetVisible( false )
                 end,
             } },
-            { custom_propinfo_enabled = { type = "bool", displayName = "Enable prop info" } },
-            { custom_propinfo_openmenu = {
+            [6] = { custom_propinfo_enabled = { type = "bool", displayName = "Enable prop info" } },
+            [7] = { custom_propinfo_openmenu = {
                 type = "button",
                 displayName = "Open Prop Info config",
                 tooltip = "Opens more options\nRight click will auto-close this menu",
@@ -106,9 +106,9 @@ local settingsTable = {
                     settingsMenu:SetVisible( false )
                 end,
             } },
-            { physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" } },
-            { lfs_volume = { type = "slider", decimals = 2, displayName = "LFS volume" } },
-            { acf_volume = {
+            [8] = { physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" } },
+            [9] = { lfs_volume = { type = "slider", decimals = 2, displayName = "LFS volume" } },
+            [10] = { acf_volume = {
                 type = "sliderfunction",
                 decimals = 2,
                 displayName = "ACF Volume",
@@ -125,7 +125,7 @@ local settingsTable = {
                 min = 0,
                 max = 1
             } },
-            { pac_enable_camera_as_bone = {
+            [11] = { pac_enable_camera_as_bone = {
                 type = "bool",
                 displayName = "Allow PACs to attach to your screen",
                 tooltip = "WARNING: This allows for extra creative PACs,\n  but can be very obnoxious.\nEnable with caution."

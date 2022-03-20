@@ -101,12 +101,12 @@ local function addFunctionButton( panel, info )
 
     function btn:DoClick()
         if not leftfunc then return end
-        leftfunc()
+        leftfunc( settingsMenu )
     end
 
     function btn:DoRightClick()
         if not rightfunc then return end
-        rightfunc()
+        rightfunc( settingsMenu )
     end
 end
 

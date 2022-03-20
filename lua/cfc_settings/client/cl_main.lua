@@ -134,14 +134,14 @@ local function handleOptions( panel, action, info )
 
     -- Function bool
     if info.type == "boolfunction" then
-        if not info.exist() then return end
+        if not info.exists() then return end
         addFunctionBool( panel, info )
         return
     end
 
     -- Function button
     if info.type == "button" then
-        if not info.exist() then return end
+        if not info.exists() then return end
         addFunctionButton( panel, info )
         return
     end

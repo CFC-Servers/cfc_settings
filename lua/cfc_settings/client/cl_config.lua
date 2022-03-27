@@ -56,7 +56,9 @@ local settingsTable = {
         ["Other addons:"] = {
             [1] = { m9k_zoomtoggle = { type = "bool", displayName = "M9K zoom toggle" } },
             [2] = { sitting_disallow_on_me = { type = "bool", displayName = "Dissallow players sitting on you" } },
-            [3] = { betterchat_enable = {
+            [3] = { cl_legs = { type = "bool", displayName = "View your legs in first-person" } },
+            [4] = { cl_vehlegs = { type = "bool", displayName = "View your legs in cars" } },
+            [5] = { betterchat_enable = {
                 type = "boolfunction",
                 displayName = "Enable Betterchat",
                 tooltip = "Enables Betterchat",
@@ -70,8 +72,8 @@ local settingsTable = {
                     return bc.base.enabled
                 end
             } },
-            [4] = { custom_hitmarkers_enabled = { type = "bool", displayName = "Enable hitmarkers" } },
-            [5] = { custom_hitmarkers_openmenu = {
+            [6] = { custom_hitmarkers_enabled = { type = "bool", displayName = "Enable hitmarkers" } },
+            [7] = { custom_hitmarkers_openmenu = {
                 type = "button",
                 displayName = "Open Hitmarkers config",
                 tooltip = "Opens more options\nRight click will auto-close this menu",
@@ -89,8 +91,8 @@ local settingsTable = {
                     settingsMenu:SetVisible( false )
                 end,
             } },
-            [6] = { custom_propinfo_enabled = { type = "bool", displayName = "Enable prop info" } },
-            [7] = { custom_propinfo_openmenu = {
+            [8] = { custom_propinfo_enabled = { type = "bool", displayName = "Enable prop info" } },
+            [9] = { custom_propinfo_openmenu = {
                 type = "button",
                 displayName = "Open Prop Info config",
                 tooltip = "Opens more options\nRight click will auto-close this menu",
@@ -108,9 +110,9 @@ local settingsTable = {
                     settingsMenu:SetVisible( false )
                 end,
             } },
-            [8] = { physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" } },
-            [9] = { lfs_volume = { type = "slider", decimals = 2, displayName = "LFS volume" } },
-            [10] = { acf_volume = {
+            [10] = { physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" } },
+            [11] = { lfs_volume = { type = "slider", decimals = 2, displayName = "LFS volume" } },
+            [12] = { acf_volume = {
                 type = "sliderfunction",
                 decimals = 2,
                 displayName = "ACF Volume",
@@ -127,7 +129,7 @@ local settingsTable = {
                 min = 0,
                 max = 1
             } },
-            [11] = { pac_enable_camera_as_bone = {
+            [13] = { pac_enable_camera_as_bone = {
                 type = "bool",
                 displayName = "Allow PACs to attach to your screen",
                 tooltip = "WARNING: This allows for extra creative PACs,\n  but can be very obnoxious.\nEnable with caution."

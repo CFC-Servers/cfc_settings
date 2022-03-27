@@ -3,7 +3,24 @@ local settingsTable = {
     {
         ["Frequently used settings:"] = {
             [1] = { proximity_voice_enabled = { type = "bool", displayName = "Enable proximity voice" } },
-            [2] = { pac_enable = { type = "bool", displayName = "Enable PAC3" } },
+            [2] = { pac_enable = {
+                type = "boolfunction",
+                displayName = "Enable PAC3",
+                tooltip = "Enables PAC3",
+                exists = function()
+                    return istable( pac )
+                end,
+                setfunc = function( val )
+                    LocalPlayer():ConCommand( "pac_enable " .. ( val and "1" or "0" ) )
+
+                    if val then
+                        LocalPlayer():ConCommand( "pac_request_outfits" )
+                    end
+                end,
+                getfunc = function()
+                    return GetConVar( "pac_enable" ):GetBool()
+                end
+            } },
             [3] = { fpp_openbuddies = {
                 type = "button",
                 displayName = "Open FPP buddy settings",

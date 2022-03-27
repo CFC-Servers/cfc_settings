@@ -20,9 +20,9 @@ local function paintButton( panel )
     panel.Paint = function( self, w, h )
         draw.RoundedBox( 0, 0, 0, w, h, btnBorderColor )
 
-        if self:IsDown( ) then
+        if self:IsDown() then
             draw.RoundedBox( 0, 1, 1, w - 2, h - 2, btnPressColor )
-        elseif self:IsHovered( ) then
+        elseif self:IsHovered() then
             draw.RoundedBox( 0, 1, 1, w - 2, h - 2, btnHoverColor )
         else
             draw.RoundedBox( 0, 1, 1, w - 2, h - 2, btnColor )

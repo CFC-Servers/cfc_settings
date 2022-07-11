@@ -3,7 +3,8 @@ local settingsTable = {
     {
         ["Frequently used settings:"] = {
             [1] = { proximity_voice_enabled = { type = "bool", displayName = "Enable proximity voice" } },
-            [2] = { pac_enable = {
+            [2] = { proximity_voice_range = { type = "slider", decimals = 0, displayName = "Proximity voice range" } },
+            [3] = { pac_enable = {
                 type = "boolfunction",
                 displayName = "Enable PAC3",
                 tooltip = "Enables PAC3",
@@ -21,7 +22,7 @@ local settingsTable = {
                     return GetConVar( "pac_enable" ):GetBool()
                 end
             } },
-            [3] = { fpp_openbuddies = {
+            [4] = { fpp_openbuddies = {
                 type = "button",
                 displayName = "Open FPP buddy settings",
                 tooltip = "Opens more options\nRight click will auto-close this menu",

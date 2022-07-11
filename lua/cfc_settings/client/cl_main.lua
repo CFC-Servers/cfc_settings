@@ -124,7 +124,7 @@ local function addFunctionButton( panel, info )
 
     local btn = panel:Add( "DButton" )
     btn:Dock( TOP )
-    
+
     if isSub then
         btn:DockMargin( 35, 0, 30, 10 )
     else
@@ -245,6 +245,6 @@ hook.Add( "OnPlayerChat", "CFCSettingsHideCommand", function( ply, text )
         toggleSettingsMenu()
     end
     return true
-end)
+end )
 
 concommand.Add( "cfc_settings", toggleSettingsMenu )

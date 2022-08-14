@@ -1,8 +1,6 @@
 --[[-------------------------------------------------------------------------
 VGUI Options menu
 ---------------------------------------------------------------------------]]
-local settingsMenu
-local isValid = IsValid
 local GetConVar = GetConVar
 local uiColor = Color( 36, 41, 67 )
 local txtColor = Color( 210, 210, 210, 255 )
@@ -42,7 +40,7 @@ end
 local function addBool( panel, text, cname, tooltip )
     local convar = GetConVar( cname )
     local checkBox = panel:Add( "DCheckBoxLabel" )
-    local tooltip = tooltip or convar:GetHelpText()
+    tooltip = tooltip or convar:GetHelpText()
     checkBox:Dock( TOP )
     checkBox:DockMargin( 10, 0, 0, 5 )
     checkBox:SetTextColor( txtColor )
@@ -56,7 +54,7 @@ end
 local function addSlider( panel, text, cname, decimal, tooltip )
     local convar = GetConVar( cname )
     local distanceSlider = vgui.Create( "DNumSlider", panel )
-    local tooltip = tooltip or convar:GetHelpText()
+    tooltip = tooltip or convar:GetHelpText()
     distanceSlider:Dock( TOP )
     distanceSlider:DockMargin( 10, -10, 0, 0 )
     distanceSlider:GetChildren()[3]:SetTextColor( txtColor )
@@ -124,7 +122,7 @@ local function addFunctionButton( panel, info )
 
     local btn = panel:Add( "DButton" )
     btn:Dock( TOP )
-    
+
     if isSub then
         btn:DockMargin( 35, 0, 30, 10 )
     else
@@ -140,12 +138,12 @@ local function addFunctionButton( panel, info )
 
     function btn:DoClick()
         if not leftfunc then return end
-        leftfunc( settingsMenu )
+        leftfunc( panel )
     end
 
     function btn:DoRightClick()
         if not rightfunc then return end
-        rightfunc( settingsMenu )
+        rightfunc( panel )
     end
 end
 
@@ -213,38 +211,43 @@ local function configHandler( panel, config  )
     end
 end
 
-local function toggleSettingsMenu()
-    if isValid( settingsMenu ) and ispanel( settingsMenu ) then
-        settingsMenu:ToggleVisible()
-        return
+CFCSettings = CFCSettings or {}
+
+function CFCSettings.openSettingsMenu( panel )
+    local parent = panel
+
+    if not parent then
+        local settingsMenu = vgui.Create( "DFrame" )
+        settingsMenu:SetSize( 270, 400 )
+        settingsMenu:Center()
+        settingsMenu:SetTitle( "Settings:" )
+        settingsMenu:MakePopup()
+        settingsMenu:SetKeyboardInputEnabled( false )
+        settingsMenu:SetDeleteOnClose( true )
+
+        parent = settingsMenu
     end
 
-    settingsMenu = vgui.Create( "DFrame" )
-    settingsMenu:SetSize( 270, 400 )
-    settingsMenu:Center()
-    settingsMenu:SetTitle( "Settings:" )
-    settingsMenu:MakePopup()
-    settingsMenu:SetKeyboardInputEnabled( false )
-    settingsMenu:SetDeleteOnClose( false )
-
+    local holder = vgui.Create( "DPanel", parent )
      -- "Parse" the config table
-    configHandler( settingsMenu, convarTable )
+    configHandler( holder, convarTable )
 
-    settingsMenu:InvalidateLayout( true )
-    settingsMenu:SizeToChildren( true, true )
+    holder:InvalidateLayout( true )
+    holder:SizeToChildren( true, true )
 
-    function settingsMenu:Paint( w, h )
+    function holder:Paint( w, h )
         draw.RoundedBox( 8, 0, 0, w, h, uiColor )
     end
 end
 
 hook.Add( "OnPlayerChat", "CFCSettingsHideCommand", function( ply, text )
+    if ply ~= LocalPlayer() then return end
+
     local lower = string.lower( text ) -- make the string lower case
     if lower ~= "!settings" then return end
-    if ply == LocalPlayer() then
-        toggleSettingsMenu()
-    end
+    CFCSettings.openSettingsMenu()
+
     return true
 end)
 
-concommand.Add( "cfc_settings", toggleSettingsMenu )
+concommand.Add( "cfc_settings", CFCSettings.openSettingsMenu )

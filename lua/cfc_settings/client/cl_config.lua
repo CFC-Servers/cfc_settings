@@ -50,6 +50,7 @@ local settingsTable = {
             [5] = { cfc_punt_enabled = { type = "bool", displayName = "Enable punt sounds" } },
             [6] = { voicebalancer_enabled = { type = "bool", displayName = "Enable voice balancer" } },
             [7] = { cfc_pvp_acf_screenshake_intensity = { type = "slider", decimals = 2, displayName = "ACF screenshake" } },
+            [8] = { pac_onuse_only_override = { type = "bool", displayName = "Ignore the 'press E to see PAC' server setting" } },
         }
     },
     {

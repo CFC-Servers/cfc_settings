@@ -41,8 +41,9 @@ end
 -- Convar settings
 local function addBool( panel, text, cname, tooltip )
     local convar = GetConVar( cname )
+    tooltip = tooltip or convar:GetHelpText()
+
     local checkBox = panel:Add( "DCheckBoxLabel" )
-    local tooltip = tooltip or convar:GetHelpText()
     checkBox:Dock( TOP )
     checkBox:DockMargin( 10, 0, 0, 5 )
     checkBox:SetTextColor( txtColor )
@@ -55,8 +56,9 @@ end
 
 local function addSlider( panel, text, cname, decimal, tooltip )
     local convar = GetConVar( cname )
+    tooltip = tooltip or convar:GetHelpText()
+
     local distanceSlider = vgui.Create( "DNumSlider", panel )
-    local tooltip = tooltip or convar:GetHelpText()
     distanceSlider:Dock( TOP )
     distanceSlider:DockMargin( 10, -10, 0, 0 )
     distanceSlider:GetChildren()[3]:SetTextColor( txtColor )
@@ -124,7 +126,7 @@ local function addFunctionButton( panel, info )
 
     local btn = panel:Add( "DButton" )
     btn:Dock( TOP )
-    
+
     if isSub then
         btn:DockMargin( 35, 0, 30, 10 )
     else
@@ -245,6 +247,6 @@ hook.Add( "OnPlayerChat", "CFCSettingsHideCommand", function( ply, text )
         toggleSettingsMenu()
     end
     return true
-end)
+end )
 
 concommand.Add( "cfc_settings", toggleSettingsMenu )

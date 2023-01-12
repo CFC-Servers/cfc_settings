@@ -134,6 +134,11 @@ local settingsTable = {
                 displayName = "Allow PACs to attach to your screen",
                 tooltip = "WARNING: This allows for extra creative PACs,\n  but can be very obnoxious.\nEnable with caution."
             } },
+            [14] = { safespace_enabed = {
+                type = "bool",
+                displayName = "Enable Profanity Filtering",
+                tooltip = "Enable/Disable in-game profanity filtering based on your Steam Profanity settings"
+            } },
         }
     }
 }

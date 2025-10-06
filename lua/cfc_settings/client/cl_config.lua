@@ -48,9 +48,8 @@ local settingsTable = {
             [3] = { cfc_pvp_transparent_builders = { type = "bool", displayName = "Enable transparent builders in pvp" } },
             [4] = { cfc_tpa_disable = { type = "bool", displayName = "Disable tpa requests" } },
             [5] = { cfc_punt_enabled = { type = "bool", displayName = "Enable punt sounds" } },
-            [6] = { voicebalancer_enabled = { type = "bool", displayName = "Enable voice balancer" } },
-            [7] = { cfc_pvp_acf_screenshake_intensity = { type = "slider", decimals = 2, displayName = "ACF screenshake" } },
-            [8] = { pac_onuse_only_override = { type = "bool", displayName = "Ignore the 'press E to see PAC' server setting" } },
+            [6] = { cfc_pvp_acf_screenshake_intensity = { type = "slider", decimals = 2, displayName = "ACF screenshake" } },
+            [7] = { pac_onuse_only_override = { type = "bool", displayName = "Ignore the 'press E to see PAC' server setting" } },
         }
     },
     {

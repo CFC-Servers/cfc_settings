@@ -34,10 +34,10 @@ local settingsTable = {
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "Falco's prop protection buddies", true )
                 end,
-                rightfunc = function( settingsMenu )
+                rightfunc = function( settingsPanel )
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "Falco's prop protection buddies", true )
-                    settingsMenu:SetVisible( false )
+                    settingsPanel:RequestClose()
                 end,
             } },
         }
@@ -85,10 +85,10 @@ local settingsTable = {
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "custom_hitmarkers", true )
                 end,
-                rightfunc = function( settingsMenu )
+                rightfunc = function( settingsPanel )
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "custom_hitmarkers", true )
-                    settingsMenu:SetVisible( false )
+                    settingsPanel:RequestClose()
                 end,
             } },
             { custom_propinfo_enabled = { type = "bool", displayName = "Enable prop info" } },
@@ -104,10 +104,10 @@ local settingsTable = {
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "custom_propinfo", true )
                 end,
-                rightfunc = function( settingsMenu )
+                rightfunc = function( settingsPanel )
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "custom_propinfo", true )
-                    settingsMenu:SetVisible( false )
+                    settingsPanel:RequestClose()
                 end,
             } },
             { physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" } },

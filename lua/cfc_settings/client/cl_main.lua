@@ -1,10 +1,18 @@
 --[[-------------------------------------------------------------------------
 VGUI Options menu
+
+Registers two panels:
+    CFCSettingsCard  - a collapsible, self-sizing section
+    CFCSettingsPanel - the search box + scrolling list of cards
+
+CFCSettingsPanel paints no background and takes its width from its parent, so it
+can be docked into any container. Standalone, it lives in the DFrame built by
+toggleSettingsMenu.
 ---------------------------------------------------------------------------]]
-local settingsMenu
 local isValid = IsValid
 local GetConVar = GetConVar
 
+local settingsMenu -- the standalone DFrame, reused across toggles
 local developerVar = GetConVar( "developer" )
 
 -- Palette
@@ -37,7 +45,21 @@ surface.CreateFont( "CFCSettingsSign", { font = "Roboto", size = 20, weight = 70
 surface.CreateFont( "CFCSettingsLabel", { font = "Roboto", size = 16, weight = 500, antialias = true } )
 surface.CreateFont( "CFCSettingsDesc", { font = "Roboto", size = 13, weight = 400, antialias = true } )
 
-local convarTable = include( "cfc_settings/client/cl_config.lua" )
+local defaultConfig = include( "cfc_settings/client/cl_config.lua" )
+
+-- Outermost ancestor, stopping short of the vgui root
+local function findRoot( panel )
+    local root = panel
+    local world = vgui.GetWorldPanel()
+
+    while true do
+        local parent = root:GetParent()
+        if not isValid( parent ) or parent == world then break end
+        root = parent
+    end
+
+    return root
+end
 
 local function paintButton( panel )
     panel:SetTextColor( btnTxtColor )
@@ -198,7 +220,8 @@ local function addFunctionSlider( panel, info )
     return distanceSlider
 end
 
-local function addFunctionButton( panel, info )
+-- menu is passed to the config's callbacks so they can act on the settings panel
+local function addFunctionButton( menu, panel, info )
     local text = info.displayName
     local leftfunc = info.leftfunc
     local rightfunc = info.rightfunc
@@ -218,18 +241,17 @@ local function addFunctionButton( panel, info )
     btn:SetFont( "CFCSettingsLabel" )
     btn:SetText( text )
     btn:SetTooltip( tooltip )
-    btn:SizeToContentsX()
     btn:SizeToContentsY( 7 )
     paintButton( btn )
 
     function btn:DoClick()
         if not leftfunc then return end
-        leftfunc( settingsMenu )
+        leftfunc( menu )
     end
 
     function btn:DoRightClick()
         if not rightfunc then return end
-        rightfunc( settingsMenu )
+        rightfunc( menu )
     end
 
     return btn
@@ -241,7 +263,7 @@ local function printInvalid( info, reason )
 end
 
 -- Option handler, returns the created control and its description label (both may be nil)
-local function handleOptions( panel, action, info )
+local function handleOptions( menu, panel, action, info )
     -- Toggle convars
     if info.type == "bool" then
         if not GetConVar( action ) then printInvalid( info, "bool convar does not exist" ) return end
@@ -276,80 +298,10 @@ local function handleOptions( panel, action, info )
     -- Function button
     if info.type == "button" then
         if not info.exists() then printInvalid( info, ".exists returned false" )  return end
-        local control = addFunctionButton( panel, info )
+        local control = addFunctionButton( menu, panel, info )
         local indent = info.issub and DESC_INDENT_CHECK or DESC_INDENT_PLAIN
         return control, addDescription( panel, descriptionFor( info ), indent )
     end
-end
-
--- Requests a resize; the actual sizing happens in the card's PerformLayout so
--- it runs after the body's children have been positioned.
-local function layoutCard( card )
-    card:InvalidateLayout()
-    local parent = card:GetParent()
-    if isValid( parent ) then parent:InvalidateLayout() end
-end
-
--- Builds a collapsible card. Returns card, body.
-local function createCard( parent, title )
-    local card = parent:Add( "DPanel" )
-    card:Dock( TOP )
-    card:DockMargin( 0, 0, 0, 10 )
-    card.collapsed = false
-    card.Paint = function( _, w, h )
-        draw.RoundedBox( 6, 0, 0, w, h, cardColor )
-    end
-
-    local header = card:Add( "DButton" )
-    header:Dock( TOP )
-    header:SetTall( CARD_HEADER_H )
-    header:SetText( "" )
-    header.Paint = function( _, w, h )
-        draw.RoundedBoxEx( 6, 0, 0, w, h, cardHeaderColor, true, true, false, false )
-        surface.SetDrawColor( accentColor )
-        surface.DrawRect( 0, 0, 3, h )
-        draw.SimpleText( title, "CFCSettingsHeader", 12, h * 0.5, txtColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
-        local sign = card.collapsed and "+" or "-"
-        draw.SimpleText( sign, "CFCSettingsSign", w - 14, h * 0.5 - 1, mutedColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER )
-    end
-
-    local body = card:Add( "DPanel" )
-    body:Dock( TOP )
-    body:DockPadding( 4, 8, 4, 0 )
-    body.Paint = nil
-    card.body = body
-
-    -- Self-correcting height: runs after docked children are positioned, so the
-    -- measured body height is accurate. Only relayouts the parent when it changes.
-    card.PerformLayout = function( self )
-        local collapsed = self.collapsed and not self.forceOpen
-        body:SetVisible( not collapsed )
-
-        local target
-        if collapsed then
-            target = CARD_HEADER_H
-        else
-            body:InvalidateLayout( true ) -- force immediate layout of the rows
-            body:SizeToChildren( false, true )
-            target = CARD_HEADER_H + body:GetTall() + CARD_BODY_BOTTOM_PAD
-        end
-
-        if self:GetTall() ~= target then
-            self:SetTall( target )
-            local scrollParent = self:GetParent()
-            if isValid( scrollParent ) then scrollParent:InvalidateLayout() end
-        end
-    end
-
-    header.DoClick = function()
-        card.collapsed = not card.collapsed
-        layoutCard( card )
-        if isValid( settingsMenu ) and isValid( settingsMenu.scroll ) then
-            settingsMenu.scroll:InvalidateLayout( true )
-        end
-    end
-
-    return card, body
 end
 
 -- How many of a category's settings have a live convar or a passing exists() check
@@ -367,9 +319,167 @@ local function countValidSettings( subtbl )
     return valid
 end
 
+--[[-------------------------------------------------------------------------
+CFCSettingsCard - a collapsible section that sizes itself to its contents
+---------------------------------------------------------------------------]]
+local CARD = {}
+
+AccessorFunc( CARD, "m_title", "Title", FORCE_STRING )
+AccessorFunc( CARD, "m_collapsed", "Collapsed", FORCE_BOOL )
+AccessorFunc( CARD, "m_forceOpen", "ForceOpen", FORCE_BOOL )
+
+function CARD:Init()
+    self:SetTitle( "" )
+    self:SetCollapsed( false )
+    self:SetForceOpen( false )
+    self:Dock( TOP )
+    self:DockMargin( 0, 0, 0, 10 )
+
+    local header = self:Add( "DButton" )
+    header:Dock( TOP )
+    header:SetTall( CARD_HEADER_H )
+    header:SetText( "" )
+    header.Paint = function( _, w, h )
+        draw.RoundedBoxEx( 6, 0, 0, w, h, cardHeaderColor, true, true, false, false )
+        surface.SetDrawColor( accentColor )
+        surface.DrawRect( 0, 0, 3, h )
+        draw.SimpleText( self:GetTitle(), "CFCSettingsHeader", 12, h * 0.5, txtColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
+        local sign = self:IsOpen() and "-" or "+"
+        draw.SimpleText( sign, "CFCSettingsSign", w - 14, h * 0.5 - 1, mutedColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER )
+    end
+    header.DoClick = function()
+        self:Toggle()
+    end
+    self.Header = header
+
+    local body = self:Add( "DPanel" )
+    body:Dock( TOP )
+    body:DockPadding( 4, 8, 4, 0 )
+    body.Paint = nil
+    self.Body = body
+end
+
+function CARD:Paint( w, h )
+    draw.RoundedBox( 6, 0, 0, w, h, cardColor )
+end
+
+function CARD:GetBody()
+    return self.Body
+end
+
+-- ForceOpen wins over Collapsed, so a search can reveal a folded card
+function CARD:IsOpen()
+    return not self:GetCollapsed() or self:GetForceOpen()
+end
+
+function CARD:Toggle()
+    self:SetCollapsed( not self:GetCollapsed() )
+    self:InvalidateLayout()
+
+    local parent = self:GetParent()
+    if isValid( parent ) then parent:InvalidateLayout() end
+end
+
+-- Runs after the body's docked children are positioned, so the measured height is
+-- accurate. Only touches the parent when the height actually changed.
+function CARD:PerformLayout()
+    local open = self:IsOpen()
+    local body = self.Body
+    body:SetVisible( open )
+
+    local target = CARD_HEADER_H
+    if open then
+        body:InvalidateLayout( true ) -- force immediate layout of the rows
+        body:SizeToChildren( false, true )
+        target = target + body:GetTall() + CARD_BODY_BOTTOM_PAD
+    end
+
+    if self:GetTall() == target then return end
+
+    self:SetTall( target )
+    local parent = self:GetParent()
+    if isValid( parent ) then parent:InvalidateLayout() end
+end
+
+vgui.Register( "CFCSettingsCard", CARD, "DPanel" )
+
+--[[-------------------------------------------------------------------------
+CFCSettingsPanel - search box over a scrolling list of cards
+---------------------------------------------------------------------------]]
+local PANEL = {}
+
+-- When true, the search box grabs the keyboard from the root panel while focused.
+-- Hosts that manage keyboard input themselves should turn this off.
+AccessorFunc( PANEL, "m_manageKeyboard", "ManageKeyboard", FORCE_BOOL )
+
+function PANEL:Init()
+    self:SetManageKeyboard( true )
+    self.rows = {}
+    self.cards = {}
+
+    local search = self:Add( "DTextEntry" )
+    search:Dock( TOP )
+    search:DockMargin( 0, 0, 0, 8 )
+    search:SetTall( 26 )
+    search:SetPlaceholderText( "Search..." )
+    search:SetTextColor( txtColor )
+    search:SetCursorColor( txtColor )
+    search:SetPaintBackground( false )
+    search.Paint = function( entry, w, h )
+        draw.RoundedBox( 4, 0, 0, w, h, searchBgColor )
+        entry:DrawTextEntryText( txtColor, accentColor, txtColor )
+        if entry:GetText() == "" and not entry:HasFocus() then
+            draw.SimpleText( "Search...", "DermaDefault", 8, h * 0.5, mutedColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
+        end
+    end
+    -- Only capture the keyboard while typing so movement keys still work otherwise
+    search.OnGetFocus = function()
+        self:CaptureKeyboard( true )
+    end
+    search.OnLoseFocus = function()
+        self:CaptureKeyboard( false )
+    end
+    search.OnChange = function( entry )
+        self:ApplySearch( entry:GetText() )
+    end
+    self.Search = search
+
+    local scroll = self:Add( "DScrollPanel" )
+    scroll:Dock( FILL )
+    self.Scroll = scroll
+
+    local sbar = scroll:GetVBar()
+    sbar:SetWide( 8 )
+    sbar:SetHideButtons( true )
+    sbar.Paint = function() end
+    sbar.btnGrip.Paint = function( _, w, h )
+        draw.RoundedBox( 4, 2, 0, w - 4, h, cardHeaderColor )
+    end
+
+    self:SetConfig( defaultConfig )
+end
+
+-- Transparent by default so the panel takes on its host's background
+function PANEL:Paint()
+end
+
+function PANEL:CaptureKeyboard( enabled )
+    if not self:GetManageKeyboard() then return end
+
+    local root = findRoot( self )
+    if isValid( root ) then root:SetKeyboardInputEnabled( enabled ) end
+end
+
+-- Hides the containing frame. Override this when embedding to close whatever the
+-- settings panel actually lives in.
+function PANEL:RequestClose()
+    local root = findRoot( self )
+    if isValid( root ) then root:SetVisible( false ) end
+end
+
 -- Builds one setting and registers it for search. The description is matched too.
-local function addSetting( body, card, rows, action, info )
-    local rowPanel, descPanel = handleOptions( body, action, info )
+function PANEL:AddSetting( card, action, info )
+    local rowPanel, descPanel = handleOptions( self, card:GetBody(), action, info )
     if not rowPanel then return end
 
     local searchText = info.displayName or action
@@ -377,7 +487,7 @@ local function addSetting( body, card, rows, action, info )
         searchText = searchText .. " " .. descPanel:GetText()
     end
 
-    rows[#rows + 1] = {
+    self.rows[#self.rows + 1] = {
         panel = rowPanel,
         desc = descPanel,
         card = card,
@@ -385,56 +495,66 @@ local function addSetting( body, card, rows, action, info )
     }
 end
 
-local function buildCard( scroll, title, subtbl, rows, cards )
-    local card, body = createCard( scroll, title )
-    cards[#cards + 1] = card
+function PANEL:AddCard( title, subtbl )
+    local card = self.Scroll:Add( "CFCSettingsCard" )
+    card:SetTitle( title )
+    self.cards[#self.cards + 1] = card
 
     for _, settingTbl in ipairs( subtbl ) do
         for action, info in pairs( settingTbl ) do
-            addSetting( body, card, rows, action, info )
+            self:AddSetting( card, action, info )
         end
     end
 
-    layoutCard( card )
+    card:InvalidateLayout()
+
+    return card
 end
 
--- Parses the config table and generates cards from it.
-local function configHandler( scroll, config, rows, cards )
+-- Rebuilds the whole list from a config table (see cl_config.lua for the shape)
+function PANEL:SetConfig( config )
+    self.Scroll:Clear()
+    self.rows = {}
+    self.cards = {}
+
     for _, tbl in ipairs( config ) do
         for title, subtbl in pairs( tbl ) do
             -- Only build the card if something in it exists
             if countValidSettings( subtbl ) ~= 0 then
-                buildCard( scroll, title, subtbl, rows, cards )
+                self:AddCard( title, subtbl )
             end
         end
     end
 end
 
 -- Filters visible rows/cards against the search query
-local function applySearch( menu, query )
+function PANEL:ApplySearch( query )
     query = string.lower( string.Trim( query or "" ) )
     local searching = query ~= ""
 
     local cardHasMatch = {}
-    for _, row in ipairs( menu.rows ) do
+    for _, row in ipairs( self.rows ) do
         local show = not searching or string.find( row.text, query, 1, true ) ~= nil
         row.panel:SetVisible( show )
         if row.desc then row.desc:SetVisible( show ) end
         if show then cardHasMatch[row.card] = true end
     end
 
-    for _, card in ipairs( menu.cards ) do
+    for _, card in ipairs( self.cards ) do
         local vis = not searching or cardHasMatch[card] == true
         card:SetVisible( vis )
-        card.forceOpen = searching -- expand matching cards while searching
-        if vis then layoutCard( card ) end
+        card:SetForceOpen( searching )
+        if vis then card:InvalidateLayout() end
     end
 
-    if isValid( menu.scroll ) then
-        menu.scroll:InvalidateLayout( true )
-    end
+    self.Scroll:InvalidateLayout( true )
 end
 
+vgui.Register( "CFCSettingsPanel", PANEL, "DPanel" )
+
+--[[-------------------------------------------------------------------------
+Standalone frame
+---------------------------------------------------------------------------]]
 local function toggleSettingsMenu()
     if isValid( settingsMenu ) and ispanel( settingsMenu ) then
         settingsMenu:ToggleVisible()
@@ -450,57 +570,14 @@ local function toggleSettingsMenu()
     settingsMenu:SetDeleteOnClose( false )
     settingsMenu:DockPadding( 8, 30, 8, 8 )
 
-    settingsMenu.rows = {}
-    settingsMenu.cards = {}
-
     function settingsMenu:Paint( w, h )
         draw.RoundedBox( 8, 0, 0, w, h, uiColor )
         draw.RoundedBoxEx( 8, 0, 0, w, 26, titleBarColor, true, true, false, false )
         draw.SimpleText( "Settings", "CFCSettingsTitle", 12, 13, txtColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
     end
 
-    -- Search box
-    local search = settingsMenu:Add( "DTextEntry" )
-    search:Dock( TOP )
-    search:DockMargin( 0, 0, 0, 8 )
-    search:SetTall( 26 )
-    search:SetPlaceholderText( "Search..." )
-    search:SetTextColor( txtColor )
-    search:SetCursorColor( txtColor )
-    search:SetPaintBackground( false )
-    search.Paint = function( self, w, h )
-        draw.RoundedBox( 4, 0, 0, w, h, searchBgColor )
-        self:DrawTextEntryText( txtColor, accentColor, txtColor )
-        if self:GetText() == "" and not self:HasFocus() then
-            draw.SimpleText( "Search...", "DermaDefault", 8, h * 0.5, mutedColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
-        end
-    end
-    -- Only capture the keyboard while typing so movement keys still work otherwise
-    search.OnGetFocus = function()
-        if isValid( settingsMenu ) then settingsMenu:SetKeyboardInputEnabled( true ) end
-    end
-    search.OnLoseFocus = function()
-        if isValid( settingsMenu ) then settingsMenu:SetKeyboardInputEnabled( false ) end
-    end
-    search.OnChange = function( self )
-        applySearch( settingsMenu, self:GetText() )
-    end
-
-    -- Scrolling content area
-    local scroll = settingsMenu:Add( "DScrollPanel" )
-    scroll:Dock( FILL )
-    settingsMenu.scroll = scroll
-
-    local sbar = scroll:GetVBar()
-    sbar:SetWide( 8 )
-    sbar:SetHideButtons( true )
-    sbar.Paint = function() end
-    sbar.btnGrip.Paint = function( _, w, h )
-        draw.RoundedBox( 4, 2, 0, w - 4, h, cardHeaderColor )
-    end
-
-    -- "Parse" the config table
-    configHandler( scroll, convarTable, settingsMenu.rows, settingsMenu.cards )
+    settingsMenu.settings = settingsMenu:Add( "CFCSettingsPanel" )
+    settingsMenu.settings:Dock( FILL )
 end
 
 hook.Add( "OnPlayerChat", "CFCSettingsHideCommand", function( ply, text )

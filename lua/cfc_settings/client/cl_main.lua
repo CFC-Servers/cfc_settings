@@ -15,6 +15,7 @@ local cardHeaderColor = Color( 52, 59, 94 )
 local searchBgColor = Color( 28, 32, 52 )
 local txtColor = Color( 210, 210, 210, 255 )
 local mutedColor = Color( 150, 156, 180 )
+local descColor = Color( 210, 210, 210, 115 )
 local accentColor = Color( 83, 227, 251, 255 )
 local boxColor = Color( 30, 34, 55 )
 local boxBorderColor = Color( 90, 98, 130 )
@@ -27,10 +28,14 @@ local btnTxtColor = Color( 210, 210, 210, 255 )
 -- Layout constants
 local CARD_HEADER_H = 30
 local CARD_BODY_BOTTOM_PAD = 8
+local DESC_INDENT_CHECK = 26 -- clears the checkbox, aligns under its label
+local DESC_INDENT_PLAIN = 8
 
 surface.CreateFont( "CFCSettingsTitle", { font = "Roboto", size = 19, weight = 700, antialias = true } )
 surface.CreateFont( "CFCSettingsHeader", { font = "Roboto", size = 16, weight = 600, antialias = true } )
 surface.CreateFont( "CFCSettingsSign", { font = "Roboto", size = 20, weight = 700, antialias = true } )
+surface.CreateFont( "CFCSettingsLabel", { font = "Roboto", size = 16, weight = 500, antialias = true } )
+surface.CreateFont( "CFCSettingsDesc", { font = "Roboto", size = 13, weight = 400, antialias = true } )
 
 local convarTable = include( "cfc_settings/client/cl_config.lua" )
 
@@ -68,6 +73,36 @@ local function skinCheckBox( checkBox )
     end
 end
 
+-- Explanatory text shown under a setting. Falls back to the tooltip, then the
+-- convar's help text.
+local function descriptionFor( info, cname )
+    local text = info.description or info.tooltip
+    if text and text ~= "" then return text end
+
+    local convar = cname and GetConVar( cname )
+    if convar then
+        local help = convar:GetHelpText()
+        if help and help ~= "" then return help end
+    end
+end
+
+-- Dimmed, wrapped description under a setting row. Returns the label, or nil.
+local function addDescription( panel, text, indent )
+    if not text or text == "" then return end
+
+    local desc = panel:Add( "DLabel" )
+    desc:Dock( TOP )
+    desc:DockMargin( indent, 0, 8, 8 )
+    desc:SetFont( "CFCSettingsDesc" )
+    desc:SetTextColor( descColor )
+    desc:SetText( text )
+    desc:SetContentAlignment( 7 )
+    desc:SetWrap( true )
+    desc:SetAutoStretchVertical( true )
+
+    return desc
+end
+
 -- Convar settings
 local function addBool( panel, text, cname, tooltip )
     local convar = GetConVar( cname )
@@ -77,6 +112,7 @@ local function addBool( panel, text, cname, tooltip )
     checkBox:Dock( TOP )
     checkBox:DockMargin( 6, 0, 6, 6 )
     checkBox:SetTextColor( txtColor )
+    checkBox:SetFont( "CFCSettingsLabel" )
     checkBox:SetText( text or cname )
     checkBox:SetValue( convar:GetBool() )
     checkBox:SetTooltip( tooltip ~= "" and tooltip )
@@ -94,7 +130,9 @@ local function addSlider( panel, text, cname, decimal, tooltip )
     local distanceSlider = vgui.Create( "DNumSlider", panel )
     distanceSlider:Dock( TOP )
     distanceSlider:DockMargin( 6, -6, 6, 0 )
-    distanceSlider:GetChildren()[3]:SetTextColor( txtColor )
+    local sliderLabel = distanceSlider:GetChildren()[3]
+    sliderLabel:SetTextColor( txtColor )
+    sliderLabel:SetFont( "CFCSettingsLabel" )
     distanceSlider:SetText( text )
     distanceSlider:SetMin( convar:GetMin() or 0 )
     distanceSlider:SetMax( convar:GetMax() or 1 )
@@ -117,6 +155,7 @@ local function addFunctionBool( panel, info )
     checkBox:Dock( TOP )
     checkBox:DockMargin( 6, 0, 6, 6 )
     checkBox:SetTextColor( txtColor )
+    checkBox:SetFont( "CFCSettingsLabel" )
     checkBox:SetText( text )
     checkBox:SetValue( getfunc() )
     checkBox:SetTooltip( tooltip )
@@ -142,7 +181,9 @@ local function addFunctionSlider( panel, info )
     local distanceSlider = vgui.Create( "DNumSlider", panel )
     distanceSlider:Dock( TOP )
     distanceSlider:DockMargin( 6, -6, 6, 0 )
-    distanceSlider:GetChildren()[3]:SetTextColor( txtColor )
+    local sliderLabel = distanceSlider:GetChildren()[3]
+    sliderLabel:SetTextColor( txtColor )
+    sliderLabel:SetFont( "CFCSettingsLabel" )
     distanceSlider:SetText( text )
     distanceSlider:SetMin( min )
     distanceSlider:SetMax( max )
@@ -174,6 +215,7 @@ local function addFunctionButton( panel, info )
     end
 
     btn:SetTextColor( txtColor )
+    btn:SetFont( "CFCSettingsLabel" )
     btn:SetText( text )
     btn:SetTooltip( tooltip )
     btn:SizeToContentsX()
@@ -198,35 +240,45 @@ local function printInvalid( info, reason )
     print( "CFC Settings: Config option, \"" .. info.displayName .. "\" not valid, " .. reason )
 end
 
--- Option handler, returns the created row panel (or nil)
+-- Option handler, returns the created control and its description label (both may be nil)
 local function handleOptions( panel, action, info )
     -- Toggle convars
     if info.type == "bool" then
         if not GetConVar( action ) then printInvalid( info, "bool convar does not exist" ) return end
-        return addBool( panel, info.displayName, action, info.tooltip )
+        local control = addBool( panel, info.displayName, action, info.tooltip )
+        local desc = addDescription( panel, descriptionFor( info, action ), DESC_INDENT_CHECK )
+        if desc then control:DockMargin( 6, 0, 6, 2 ) end
+        return control, desc
     end
     -- Convars with multiple values
     if info.type == "slider" then
         if not GetConVar( action ) then printInvalid( info, "other convar does not exist" ) return end
-        return addSlider( panel, info.displayName, action, info.decimals, info.tooltip )
+        local control = addSlider( panel, info.displayName, action, info.decimals, info.tooltip )
+        return control, addDescription( panel, descriptionFor( info, action ), DESC_INDENT_PLAIN )
     end
 
     -- Function slider
     if info.type == "sliderfunction" then
         if not info.exists() then printInvalid( info, ".exists returned false" )  return end
-        return addFunctionSlider( panel, info )
+        local control = addFunctionSlider( panel, info )
+        return control, addDescription( panel, descriptionFor( info ), DESC_INDENT_PLAIN )
     end
 
     -- Function bool
     if info.type == "boolfunction" then
         if not info.exists() then printInvalid( info, ".exists returned false" )  return end
-        return addFunctionBool( panel, info )
+        local control = addFunctionBool( panel, info )
+        local desc = addDescription( panel, descriptionFor( info ), DESC_INDENT_CHECK )
+        if desc then control:DockMargin( 6, 0, 6, 2 ) end
+        return control, desc
     end
 
     -- Function button
     if info.type == "button" then
         if not info.exists() then printInvalid( info, ".exists returned false" )  return end
-        return addFunctionButton( panel, info )
+        local control = addFunctionButton( panel, info )
+        local indent = info.issub and DESC_INDENT_CHECK or DESC_INDENT_PLAIN
+        return control, addDescription( panel, descriptionFor( info ), indent )
     end
 end
 
@@ -300,38 +352,60 @@ local function createCard( parent, title )
     return card, body
 end
 
+-- How many of a category's settings have a live convar or a passing exists() check
+local function countValidSettings( subtbl )
+    local valid = 0
+
+    for _, settingTbl in ipairs( subtbl ) do
+        for action, info in pairs( settingTbl ) do
+            if ( isfunction( info.exists ) and info.exists() ) or GetConVar( action ) then
+                valid = valid + 1
+            end
+        end
+    end
+
+    return valid
+end
+
+-- Builds one setting and registers it for search. The description is matched too.
+local function addSetting( body, card, rows, action, info )
+    local rowPanel, descPanel = handleOptions( body, action, info )
+    if not rowPanel then return end
+
+    local searchText = info.displayName or action
+    if descPanel then
+        searchText = searchText .. " " .. descPanel:GetText()
+    end
+
+    rows[#rows + 1] = {
+        panel = rowPanel,
+        desc = descPanel,
+        card = card,
+        text = string.lower( searchText )
+    }
+end
+
+local function buildCard( scroll, title, subtbl, rows, cards )
+    local card, body = createCard( scroll, title )
+    cards[#cards + 1] = card
+
+    for _, settingTbl in ipairs( subtbl ) do
+        for action, info in pairs( settingTbl ) do
+            addSetting( body, card, rows, action, info )
+        end
+    end
+
+    layoutCard( card )
+end
+
 -- Parses the config table and generates cards from it.
 local function configHandler( scroll, config, rows, cards )
     for _, tbl in ipairs( config ) do
         for title, subtbl in pairs( tbl ) do
-            -- Check if convars or functions exist before building the card.
-            local valid = 0
-            for _, settingtbl in ipairs( subtbl ) do
-                for action, info in pairs( settingtbl ) do
-                    if ( isfunction( info.exists ) and info.exists() ) or GetConVar( action ) then
-                        valid = valid + 1
-                    end
-                end
+            -- Only build the card if something in it exists
+            if countValidSettings( subtbl ) ~= 0 then
+                buildCard( scroll, title, subtbl, rows, cards )
             end
-            if valid == 0 then continue end
-
-            local card, body = createCard( scroll, title )
-            cards[#cards + 1] = card
-
-            for _, settingTbl in ipairs( subtbl ) do
-                for action, info in pairs( settingTbl ) do
-                    local rowPanel = handleOptions( body, action, info )
-                    if rowPanel then
-                        rows[#rows + 1] = {
-                            panel = rowPanel,
-                            card = card,
-                            text = string.lower( info.displayName or action )
-                        }
-                    end
-                end
-            end
-
-            layoutCard( card )
         end
     end
 end
@@ -345,6 +419,7 @@ local function applySearch( menu, query )
     for _, row in ipairs( menu.rows ) do
         local show = not searching or string.find( row.text, query, 1, true ) ~= nil
         row.panel:SetVisible( show )
+        if row.desc then row.desc:SetVisible( show ) end
         if show then cardHasMatch[row.card] = true end
     end
 

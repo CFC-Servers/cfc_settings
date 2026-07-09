@@ -1,7 +1,7 @@
 -- Main formatting table
 local settingsTable = {
     {
-        ["Frequently used settings:"] = {
+        ["Frequently used:"] = {
             { proximity_voice_enabled = { type = "bool", displayName = "Enable proximity voice" } },
             { pac_enable = {
                 type = "boolfunction",
@@ -43,12 +43,12 @@ local settingsTable = {
         }
     },
     {
-        ["CFC Specific Settings:"] = {
+        ["CFC Settings:"] = {
             { streamcore_disable = { type = "bool", displayName = "Disable streamcore" } },
             { cfc_painsounds_enabled = { type = "bool", displayName = "Enable painsounds" } },
             { cfc_pvp_transparent_builders = { type = "bool", displayName = "Enable transparent builders in pvp" } },
             { cfc_tpa_disable = { type = "bool", displayName = "Disable tpa requests" } },
-            { cfc_punt_enabled = { type = "bool", displayName = "Enable punt sounds" } },
+            { cfc_punt_enabled = { type = "bool", displayName = "Enable gravgun-punt voices" } },
             { cfc_pvp_acf_screenshake_intensity = { type = "slider", decimals = 2, displayName = "ACF screenshake" } },
         }
     },

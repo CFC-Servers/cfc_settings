@@ -5,6 +5,8 @@ local settingsMenu
 local isValid = IsValid
 local GetConVar = GetConVar
 
+local developerVar = GetConVar( "developer" )
+
 -- Palette
 local uiColor = Color( 36, 41, 67 )
 local titleBarColor = Color( 28, 32, 52 )
@@ -191,34 +193,39 @@ local function addFunctionButton( panel, info )
     return btn
 end
 
+local function printInvalid( info, reason )
+    if not developerVar:GetBool() then return end
+    print( "CFC Settings: Config option, \"" .. info.displayName .. "\" not valid, " .. reason )
+end
+
 -- Option handler, returns the created row panel (or nil)
 local function handleOptions( panel, action, info )
     -- Toggle convars
     if info.type == "bool" then
-        if not GetConVar( action ) then return end
+        if not GetConVar( action ) then printInvalid( info, "bool convar does not exist" ) return end
         return addBool( panel, info.displayName, action, info.tooltip )
     end
     -- Convars with multiple values
     if info.type == "slider" then
-        if not GetConVar( action ) then return end
+        if not GetConVar( action ) then printInvalid( info, "other convar does not exist" ) return end
         return addSlider( panel, info.displayName, action, info.decimals, info.tooltip )
     end
 
     -- Function slider
     if info.type == "sliderfunction" then
-        if not info.exists() then return end
+        if not info.exists() then printInvalid( info, ".exists returned false" )  return end
         return addFunctionSlider( panel, info )
     end
 
     -- Function bool
     if info.type == "boolfunction" then
-        if not info.exists() then return end
+        if not info.exists() then printInvalid( info, ".exists returned false" )  return end
         return addFunctionBool( panel, info )
     end
 
     -- Function button
     if info.type == "button" then
-        if not info.exists() then return end
+        if not info.exists() then printInvalid( info, ".exists returned false" )  return end
         return addFunctionButton( panel, info )
     end
 end
@@ -382,7 +389,7 @@ local function toggleSettingsMenu()
     search:Dock( TOP )
     search:DockMargin( 0, 0, 0, 8 )
     search:SetTall( 26 )
-    search:SetPlaceholderText( "Search settings..." )
+    search:SetPlaceholderText( "Search..." )
     search:SetTextColor( txtColor )
     search:SetCursorColor( txtColor )
     search:SetPaintBackground( false )
@@ -390,7 +397,7 @@ local function toggleSettingsMenu()
         draw.RoundedBox( 4, 0, 0, w, h, searchBgColor )
         self:DrawTextEntryText( txtColor, accentColor, txtColor )
         if self:GetText() == "" and not self:HasFocus() then
-            draw.SimpleText( "Search settings...", "DermaDefault", 8, h * 0.5, mutedColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
+            draw.SimpleText( "Search...", "DermaDefault", 8, h * 0.5, mutedColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
         end
     end
     -- Only capture the keyboard while typing so movement keys still work otherwise

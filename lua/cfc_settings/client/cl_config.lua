@@ -55,7 +55,7 @@ local settingsTable = {
     {
         ["Other:"] = {
             { m9k_zoomtoggle = { type = "bool", displayName = "M9K zoom toggle" } },
-            { sitting_disallow_on_me = { type = "bool", displayName = "Dissallow players sitting on you" } },
+            { sitting_disallow_on_me = { type = "bool", displayName = "Disallow players sitting on you" } },
             { cl_legs = { type = "bool", displayName = "View your legs in first-person" } },
             { cl_vehlegs = { type = "bool", displayName = "View your legs in cars" } },
             { betterchat_enable = {

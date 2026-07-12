@@ -36,6 +36,8 @@ local btnTxtColor = Color( 210, 210, 210, 255 )
 -- Layout constants
 local CARD_HEADER_H = 30
 local CARD_BODY_BOTTOM_PAD = 8
+local CARD_ROUNDNESS = 6
+local CARD_ACCENT_W = 3
 local DESC_INDENT_CHECK = 26 -- clears the checkbox, aligns under its label
 local DESC_INDENT_PLAIN = 8
 
@@ -80,7 +82,6 @@ local function skinCheckBox( checkBox )
     local box = checkBox.Button
     if not isValid( box ) then return end
 
-    box:SetSize( 16, 16 )
     box.Paint = function( self, w, h )
         if self:GetChecked() then
             draw.RoundedBox( 3, 0, 0, w, h, accentColor )
@@ -108,6 +109,22 @@ local function descriptionFor( info, cname )
     end
 end
 
+-- Hover text. Resolves the same sources as descriptionFor, so when the two land on
+-- the same string the setting would say it inline and again on hover: drop it.
+local function tooltipFor( info, cname, descText )
+    local text = info.tooltip
+
+    if not text or text == "" then
+        local convar = cname and GetConVar( cname )
+        text = convar and convar:GetHelpText()
+    end
+
+    if not text or text == "" then return end
+    if text == descText then return end
+
+    return text
+end
+
 -- Dimmed, wrapped description under a setting row. Returns the label, or nil.
 local function addDescription( panel, text, indent )
     if not text or text == "" then return end
@@ -125,10 +142,9 @@ local function addDescription( panel, text, indent )
     return desc
 end
 
--- Convar settings
+-- Convar settings. tooltip is already resolved by tooltipFor, nil means show none.
 local function addBool( panel, text, cname, tooltip )
     local convar = GetConVar( cname )
-    tooltip = tooltip or convar:GetHelpText()
 
     local checkBox = panel:Add( "DCheckBoxLabel" )
     checkBox:Dock( TOP )
@@ -137,7 +153,7 @@ local function addBool( panel, text, cname, tooltip )
     checkBox:SetFont( "CFCSettingsLabel" )
     checkBox:SetText( text or cname )
     checkBox:SetValue( convar:GetBool() )
-    checkBox:SetTooltip( tooltip ~= "" and tooltip )
+    checkBox:SetTooltip( tooltip )
     checkBox:SetConVar( cname )
     checkBox:SizeToContents()
     skinCheckBox( checkBox )
@@ -145,33 +161,37 @@ local function addBool( panel, text, cname, tooltip )
     return checkBox
 end
 
+-- Docked, themed DNumSlider. Callers still set the range, value and convar.
+local function createSlider( panel )
+    local slider = vgui.Create( "DNumSlider", panel )
+    slider:Dock( TOP )
+    slider:DockMargin( 6, -6, 6, 0 )
+    slider.Label:SetTextColor( txtColor )
+    slider.Label:SetFont( "CFCSettingsLabel" )
+
+    return slider
+end
+
 local function addSlider( panel, text, cname, decimal, tooltip )
     local convar = GetConVar( cname )
-    tooltip = tooltip or convar:GetHelpText()
 
-    local distanceSlider = vgui.Create( "DNumSlider", panel )
-    distanceSlider:Dock( TOP )
-    distanceSlider:DockMargin( 6, -6, 6, 0 )
-    local sliderLabel = distanceSlider:GetChildren()[3]
-    sliderLabel:SetTextColor( txtColor )
-    sliderLabel:SetFont( "CFCSettingsLabel" )
+    local distanceSlider = createSlider( panel )
     distanceSlider:SetText( text )
     distanceSlider:SetMin( convar:GetMin() or 0 )
     distanceSlider:SetMax( convar:GetMax() or 1 )
     distanceSlider:SetValue( convar:GetFloat() )
     distanceSlider:SetDecimals( decimal or 0 )
-    distanceSlider:SetTooltip( tooltip ~= "" and tooltip )
+    distanceSlider:SetTooltip( tooltip )
     distanceSlider:SetConVar( cname )
 
     return distanceSlider
 end
 
 -- Custom function settings
-local function addFunctionBool( panel, info )
+local function addFunctionBool( panel, info, tooltip )
     local text = info.displayName
     local setfunc = info.setfunc
     local getfunc = info.getfunc
-    local tooltip = info.tooltip
 
     local checkBox = panel:Add( "DCheckBoxLabel" )
     checkBox:Dock( TOP )
@@ -191,21 +211,15 @@ local function addFunctionBool( panel, info )
     return checkBox
 end
 
-local function addFunctionSlider( panel, info )
+local function addFunctionSlider( panel, info, tooltip )
     local max = info.max
     local min = info.min
     local text = info.displayName
     local decimals = info.decimals
     local setfunc = info.setfunc
     local getfunc = info.getfunc
-    local tooltip = info.tooltip
 
-    local distanceSlider = vgui.Create( "DNumSlider", panel )
-    distanceSlider:Dock( TOP )
-    distanceSlider:DockMargin( 6, -6, 6, 0 )
-    local sliderLabel = distanceSlider:GetChildren()[3]
-    sliderLabel:SetTextColor( txtColor )
-    sliderLabel:SetFont( "CFCSettingsLabel" )
+    local distanceSlider = createSlider( panel )
     distanceSlider:SetText( text )
     distanceSlider:SetMin( min )
     distanceSlider:SetMax( max )
@@ -221,11 +235,10 @@ local function addFunctionSlider( panel, info )
 end
 
 -- menu is passed to the config's callbacks so they can act on the settings panel
-local function addFunctionButton( menu, panel, info )
+local function addFunctionButton( menu, panel, info, tooltip )
     local text = info.displayName
     local leftfunc = info.leftfunc
     local rightfunc = info.rightfunc
-    local tooltip = info.tooltip
     local isSub = info.issub
 
     local btn = panel:Add( "DButton" )
@@ -264,43 +277,50 @@ end
 
 -- Option handler, returns the created control and its description label (both may be nil)
 local function handleOptions( menu, panel, action, info )
+    if not info.displayName then printInvalid( info, "missing .displayName" ) return end
+
     -- Toggle convars
     if info.type == "bool" then
         if not GetConVar( action ) then printInvalid( info, "bool convar does not exist" ) return end
-        local control = addBool( panel, info.displayName, action, info.tooltip )
-        local desc = addDescription( panel, descriptionFor( info, action ), DESC_INDENT_CHECK )
+        local descText = descriptionFor( info, action )
+        local control = addBool( panel, info.displayName, action, tooltipFor( info, action, descText ) )
+        local desc = addDescription( panel, descText, DESC_INDENT_CHECK )
         if desc then control:DockMargin( 6, 0, 6, 2 ) end
         return control, desc
     end
     -- Convars with multiple values
     if info.type == "slider" then
-        if not GetConVar( action ) then printInvalid( info, "other convar does not exist" ) return end
-        local control = addSlider( panel, info.displayName, action, info.decimals, info.tooltip )
-        return control, addDescription( panel, descriptionFor( info, action ), DESC_INDENT_PLAIN )
+        if not GetConVar( action ) then printInvalid( info, "slider convar does not exist" ) return end
+        local descText = descriptionFor( info, action )
+        local control = addSlider( panel, info.displayName, action, info.decimals, tooltipFor( info, action, descText ) )
+        return control, addDescription( panel, descText, DESC_INDENT_PLAIN )
     end
 
     -- Function slider
     if info.type == "sliderfunction" then
-        if not info.exists() then printInvalid( info, ".exists returned false" )  return end
-        local control = addFunctionSlider( panel, info )
-        return control, addDescription( panel, descriptionFor( info ), DESC_INDENT_PLAIN )
+        if not info.exists() then printInvalid( info, ".exists returned false" ) return end
+        local descText = descriptionFor( info )
+        local control = addFunctionSlider( panel, info, tooltipFor( info, nil, descText ) )
+        return control, addDescription( panel, descText, DESC_INDENT_PLAIN )
     end
 
     -- Function bool
     if info.type == "boolfunction" then
-        if not info.exists() then printInvalid( info, ".exists returned false" )  return end
-        local control = addFunctionBool( panel, info )
-        local desc = addDescription( panel, descriptionFor( info ), DESC_INDENT_CHECK )
+        if not info.exists() then printInvalid( info, ".exists returned false" ) return end
+        local descText = descriptionFor( info )
+        local control = addFunctionBool( panel, info, tooltipFor( info, nil, descText ) )
+        local desc = addDescription( panel, descText, DESC_INDENT_CHECK )
         if desc then control:DockMargin( 6, 0, 6, 2 ) end
         return control, desc
     end
 
     -- Function button
     if info.type == "button" then
-        if not info.exists() then printInvalid( info, ".exists returned false" )  return end
-        local control = addFunctionButton( menu, panel, info )
+        if not info.exists() then printInvalid( info, ".exists returned false" ) return end
+        local descText = descriptionFor( info )
+        local control = addFunctionButton( menu, panel, info, tooltipFor( info, nil, descText ) )
         local indent = info.issub and DESC_INDENT_CHECK or DESC_INDENT_PLAIN
-        return control, addDescription( panel, descriptionFor( info ), indent )
+        return control, addDescription( panel, descText, indent )
     end
 end
 
@@ -340,27 +360,33 @@ function CARD:Init()
     header:SetTall( CARD_HEADER_H )
     header:SetText( "" )
     header.Paint = function( _, w, h )
-        draw.RoundedBoxEx( 6, 0, 0, w, h, cardHeaderColor, true, true, false, false )
-        surface.SetDrawColor( accentColor )
-        surface.DrawRect( 0, 0, 3, h )
+        -- Collapsed, the header is the entire card, so it owns the bottom corners too
+        local open = self:IsOpen()
+        local roundBottom = not open
+
+        -- The accent stripe is the header painted in accent and then inset by its
+        -- width, so it follows the rounded corners instead of squaring them off
+        draw.RoundedBoxEx( CARD_ROUNDNESS, 0, 0, w, h, accentColor, true, true, roundBottom, roundBottom )
+        draw.RoundedBoxEx( CARD_ROUNDNESS, CARD_ACCENT_W, 0, w - CARD_ACCENT_W, h, cardHeaderColor, true, true, roundBottom, roundBottom )
+
         draw.SimpleText( self:GetTitle(), "CFCSettingsHeader", 12, h * 0.5, txtColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
-        local sign = self:IsOpen() and "-" or "+"
-        draw.SimpleText( sign, "CFCSettingsSign", w - 14, h * 0.5 - 1, mutedColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER )
+        draw.SimpleText( open and "-" or "+", "CFCSettingsSign", w - 14, h * 0.5 - 1, mutedColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER )
     end
     header.DoClick = function()
         self:Toggle()
     end
     self.Header = header
 
+    -- Transparent, so the card's own background shows through
     local body = self:Add( "DPanel" )
     body:Dock( TOP )
     body:DockPadding( 4, 8, 4, 0 )
-    body.Paint = nil
+    body:SetPaintBackground( false )
     self.Body = body
 end
 
 function CARD:Paint( w, h )
-    draw.RoundedBox( 6, 0, 0, w, h, cardColor )
+    draw.RoundedBox( CARD_ROUNDNESS, 0, 0, w, h, cardColor )
 end
 
 function CARD:GetBody()
@@ -372,16 +398,27 @@ function CARD:IsOpen()
     return not self:GetCollapsed() or self:GetForceOpen()
 end
 
+-- Our height feeds the parent's docking, and one level above that a DScrollPanel
+-- needs to re-measure its canvas and scrollbar. InvalidateLayout does not cascade,
+-- so both have to be told.
+function CARD:InvalidateAncestors()
+    local parent = self:GetParent()
+    if not isValid( parent ) then return end
+
+    parent:InvalidateLayout()
+
+    local grandparent = parent:GetParent()
+    if isValid( grandparent ) then grandparent:InvalidateLayout() end
+end
+
 function CARD:Toggle()
     self:SetCollapsed( not self:GetCollapsed() )
     self:InvalidateLayout()
-
-    local parent = self:GetParent()
-    if isValid( parent ) then parent:InvalidateLayout() end
+    self:InvalidateAncestors()
 end
 
 -- Runs after the body's docked children are positioned, so the measured height is
--- accurate. Only touches the parent when the height actually changed.
+-- accurate. Only touches the ancestors when the height actually changed.
 function CARD:PerformLayout()
     local open = self:IsOpen()
     local body = self.Body
@@ -397,8 +434,7 @@ function CARD:PerformLayout()
     if self:GetTall() == target then return end
 
     self:SetTall( target )
-    local parent = self:GetParent()
-    if isValid( parent ) then parent:InvalidateLayout() end
+    self:InvalidateAncestors()
 end
 
 vgui.Register( "CFCSettingsCard", CARD, "DPanel" )
@@ -414,6 +450,7 @@ AccessorFunc( PANEL, "m_manageKeyboard", "ManageKeyboard", FORCE_BOOL )
 
 function PANEL:Init()
     self:SetManageKeyboard( true )
+    self:SetPaintBackground( false ) -- take on the host's background
     self.rows = {}
     self.cards = {}
 
@@ -427,16 +464,20 @@ function PANEL:Init()
     search:SetPaintBackground( false )
     search.Paint = function( entry, w, h )
         draw.RoundedBox( 4, 0, 0, w, h, searchBgColor )
-        entry:DrawTextEntryText( txtColor, accentColor, txtColor )
-        if entry:GetText() == "" and not entry:HasFocus() then
-            draw.SimpleText( "Search...", "DermaDefault", 8, h * 0.5, mutedColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER )
-        end
+        entry:DrawTextEntryText( txtColor, accentColor, txtColor ) -- also draws the placeholder
     end
+    -- Chain the base methods: they fire OnTextEntryGetFocus/OnTextEntryLoseFocus,
+    -- which the gamemode and other addons listen to.
+    local baseGetFocus = search.OnGetFocus
+    local baseLoseFocus = search.OnLoseFocus
+
     -- Only capture the keyboard while typing so movement keys still work otherwise
-    search.OnGetFocus = function()
+    search.OnGetFocus = function( entry, ... )
+        if baseGetFocus then baseGetFocus( entry, ... ) end
         self:CaptureKeyboard( true )
     end
-    search.OnLoseFocus = function()
+    search.OnLoseFocus = function( entry, ... )
+        if baseLoseFocus then baseLoseFocus( entry, ... ) end
         self:CaptureKeyboard( false )
     end
     search.OnChange = function( entry )
@@ -459,20 +500,47 @@ function PANEL:Init()
     self:SetConfig( defaultConfig )
 end
 
--- Transparent by default so the panel takes on its host's background
-function PANEL:Paint()
-end
-
+-- Remembers the panel it enabled input on, rather than re-deriving the root on
+-- release: a reparented (or closing) panel can resolve to a different root, which
+-- would leave the original stuck capturing the keyboard.
 function PANEL:CaptureKeyboard( enabled )
     if not self:GetManageKeyboard() then return end
 
-    local root = findRoot( self )
-    if isValid( root ) then root:SetKeyboardInputEnabled( enabled ) end
+    if enabled then
+        local root = findRoot( self )
+        if not isValid( root ) then return end
+
+        self.keyboardRoot = root
+        root:SetKeyboardInputEnabled( true )
+        return
+    end
+
+    local root = self.keyboardRoot
+    self.keyboardRoot = nil
+    if isValid( root ) then root:SetKeyboardInputEnabled( false ) end
+end
+
+-- Drops keyboard capture and text focus. Idempotent, so every close path can call
+-- it without checking. Hosts should call this when they hide the panel.
+function PANEL:ReleaseKeyboard()
+    if isValid( self.Search ) and self.Search:HasFocus() then
+        self.Search:KillFocus() -- fires OnLoseFocus, which releases the capture
+    end
+
+    self:CaptureKeyboard( false )
+end
+
+-- Hiding an ancestor does not fire OnLoseFocus, so the capture would outlive the
+-- panel being closed. Removal is the one close path VGUI tells us about.
+function PANEL:OnRemove()
+    self:CaptureKeyboard( false )
 end
 
 -- Hides the containing frame. Override this when embedding to close whatever the
 -- settings panel actually lives in.
 function PANEL:RequestClose()
+    self:ReleaseKeyboard()
+
     local root = findRoot( self )
     if isValid( root ) then root:SetVisible( false ) end
 end
@@ -544,9 +612,13 @@ function PANEL:ApplySearch( query )
         local vis = not searching or cardHasMatch[card] == true
         card:SetVisible( vis )
         card:SetForceOpen( searching )
-        if vis then card:InvalidateLayout() end
+        if vis then card:InvalidateLayout( true ) end -- resize now, the canvas measures us below
     end
 
+    -- Hiding a card changes no card's height, so nothing here would invalidate the
+    -- canvas on its own, and the survivors would keep their old positions. Lay the
+    -- canvas out to re-dock them, then the scroll panel to resize it and the bar.
+    self.Scroll:GetCanvas():InvalidateLayout( true )
     self.Scroll:InvalidateLayout( true )
 end
 
@@ -557,6 +629,12 @@ Standalone frame
 ---------------------------------------------------------------------------]]
 local function toggleSettingsMenu()
     if isValid( settingsMenu ) and ispanel( settingsMenu ) then
+        -- The frame is reused, so a capture left behind here would persist into the
+        -- next open and freeze the player's movement keys.
+        if settingsMenu:IsVisible() then
+            settingsMenu.settings:ReleaseKeyboard()
+        end
+
         settingsMenu:ToggleVisible()
         return
     end
@@ -578,6 +656,11 @@ local function toggleSettingsMenu()
 
     settingsMenu.settings = settingsMenu:Add( "CFCSettingsPanel" )
     settingsMenu.settings:Dock( FILL )
+
+    -- Fires for the X button and any other Close() caller
+    function settingsMenu:OnClose()
+        self.settings:ReleaseKeyboard()
+    end
 end
 
 hook.Add( "OnPlayerChat", "CFCSettingsHideCommand", function( ply, text )

@@ -44,6 +44,7 @@ local settingsTable = {
     },
     {
         ["CFC Settings:"] = {
+            { cfc_targetid = { type = "bool", displayName = "CFC TargetID" } },
             { streamcore_disable = { type = "bool", displayName = "Disable streamcore" } },
             { cfc_painsounds_enabled = { type = "bool", displayName = "Enable painsounds" } },
             { cfc_pvp_transparent_builders = { type = "bool", displayName = "Enable transparent builders in pvp" } },

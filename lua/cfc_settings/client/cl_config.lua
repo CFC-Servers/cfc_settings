@@ -1,9 +1,9 @@
 -- Main formatting table
 local settingsTable = {
     {
-        ["Frequently used settings:"] = {
-            [1] = { proximity_voice_enabled = { type = "bool", displayName = "Enable proximity voice" } },
-            [2] = { pac_enable = {
+        ["Frequently used:"] = {
+            { proximity_voice_enabled = { type = "bool", displayName = "Enable proximity voice" } },
+            { pac_enable = {
                 type = "boolfunction",
                 displayName = "Enable PAC3",
                 tooltip = "Enables PAC3",
@@ -21,7 +21,8 @@ local settingsTable = {
                     return GetConVar( "pac_enable" ):GetBool()
                 end
             } },
-            [3] = { fpp_openbuddies = {
+            { pac_onuse_only_override = { type = "bool", displayName = "Ignore the 'press E to see PAC' server setting" } },
+            { fpp_openbuddies = {
                 type = "button",
                 displayName = "Open FPP buddy settings",
                 tooltip = "Opens more options\nRight click will auto-close this menu",
@@ -33,32 +34,32 @@ local settingsTable = {
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "Falco's prop protection buddies", true )
                 end,
-                rightfunc = function( settingsMenu )
+                rightfunc = function( settingsPanel )
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "Falco's prop protection buddies", true )
-                    settingsMenu:SetVisible( false )
+                    settingsPanel:RequestClose()
                 end,
             } },
         }
     },
     {
-        ["CFC Specific Settings:"] = {
-            [1] = { streamcore_disable = { type = "bool", displayName = "Disable streamcore" } },
-            [2] = { cfc_painsounds_enabled = { type = "bool", displayName = "Enable painsounds" } },
-            [3] = { cfc_pvp_transparent_builders = { type = "bool", displayName = "Enable transparent builders in pvp" } },
-            [4] = { cfc_tpa_disable = { type = "bool", displayName = "Disable tpa requests" } },
-            [5] = { cfc_punt_enabled = { type = "bool", displayName = "Enable punt sounds" } },
-            [6] = { cfc_pvp_acf_screenshake_intensity = { type = "slider", decimals = 2, displayName = "ACF screenshake" } },
-            [7] = { pac_onuse_only_override = { type = "bool", displayName = "Ignore the 'press E to see PAC' server setting" } },
+        ["CFC Settings:"] = {
+            { cfc_targetid = { type = "bool", displayName = "CFC TargetID" } },
+            { streamcore_disable = { type = "bool", displayName = "Disable streamcore" } },
+            { cfc_painsounds_enabled = { type = "bool", displayName = "Enable painsounds" } },
+            { cfc_pvp_transparent_builders = { type = "bool", displayName = "Enable transparent builders in pvp" } },
+            { cfc_tpa_disable = { type = "bool", displayName = "Disable tpa requests" } },
+            { cfc_punt_enabled = { type = "bool", displayName = "Enable gravgun-punt voices" } },
+            { cfc_pvp_acf_screenshake_intensity = { type = "slider", decimals = 2, displayName = "ACF screenshake" } },
         }
     },
     {
-        ["Other addons:"] = {
-            [1] = { m9k_zoomtoggle = { type = "bool", displayName = "M9K zoom toggle" } },
-            [2] = { sitting_disallow_on_me = { type = "bool", displayName = "Dissallow players sitting on you" } },
-            [3] = { cl_legs = { type = "bool", displayName = "View your legs in first-person" } },
-            [4] = { cl_vehlegs = { type = "bool", displayName = "View your legs in cars" } },
-            [5] = { betterchat_enable = {
+        ["Other:"] = {
+            { m9k_zoomtoggle = { type = "bool", displayName = "M9K zoom toggle" } },
+            { sitting_disallow_on_me = { type = "bool", displayName = "Disallow players sitting on you" } },
+            { cl_legs = { type = "bool", displayName = "View your legs in first-person" } },
+            { cl_vehlegs = { type = "bool", displayName = "View your legs in cars" } },
+            { betterchat_enable = {
                 type = "boolfunction",
                 displayName = "Enable Betterchat",
                 tooltip = "Enables Betterchat",
@@ -72,8 +73,8 @@ local settingsTable = {
                     return bc.base.enabled
                 end
             } },
-            [6] = { custom_hitmarkers_enabled = { type = "bool", displayName = "Enable hitmarkers" } },
-            [7] = { custom_hitmarkers_openmenu = {
+            { custom_hitmarkers_enabled = { type = "bool", displayName = "Enable hitmarkers" } },
+            { custom_hitmarkers_openmenu = {
                 type = "button",
                 displayName = "Open Hitmarkers config",
                 tooltip = "Opens more options\nRight click will auto-close this menu",
@@ -85,14 +86,14 @@ local settingsTable = {
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "custom_hitmarkers", true )
                 end,
-                rightfunc = function( settingsMenu )
+                rightfunc = function( settingsPanel )
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "custom_hitmarkers", true )
-                    settingsMenu:SetVisible( false )
+                    settingsPanel:RequestClose()
                 end,
             } },
-            [8] = { custom_propinfo_enabled = { type = "bool", displayName = "Enable prop info" } },
-            [9] = { custom_propinfo_openmenu = {
+            { custom_propinfo_enabled = { type = "bool", displayName = "Enable prop info" } },
+            { custom_propinfo_openmenu = {
                 type = "button",
                 displayName = "Open Prop Info config",
                 tooltip = "Opens more options\nRight click will auto-close this menu",
@@ -104,15 +105,15 @@ local settingsTable = {
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "custom_propinfo", true )
                 end,
-                rightfunc = function( settingsMenu )
+                rightfunc = function( settingsPanel )
                     LocalPlayer():ConCommand( "+menu" )
                     spawnmenu.ActivateTool( "custom_propinfo", true )
-                    settingsMenu:SetVisible( false )
+                    settingsPanel:RequestClose()
                 end,
             } },
-            [10] = { physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" } },
-            [11] = { lfs_volume = { type = "slider", decimals = 2, displayName = "LFS volume" } },
-            [12] = { acf_volume = {
+            { physgun_buildmode_enabled = { type = "bool", displayName = "Enable physgun buildmode" } },
+            { lfs_volume = { type = "slider", decimals = 2, displayName = "LFS volume" } },
+            { acf_volume = {
                 type = "sliderfunction",
                 decimals = 2,
                 displayName = "ACF Volume",
@@ -129,12 +130,12 @@ local settingsTable = {
                 min = 0,
                 max = 1
             } },
-            [13] = { pac_enable_camera_as_bone = {
+            { pac_enable_camera_as_bone = {
                 type = "bool",
                 displayName = "Allow PACs to attach to your screen",
                 tooltip = "WARNING: This allows for extra creative PACs,\n  but can be very obnoxious.\nEnable with caution."
             } },
-            [14] = { safespace_enabed = {
+            { safespace_enabed = {
                 type = "bool",
                 displayName = "Enable Profanity Filtering",
                 tooltip = "Enable/Disable in-game profanity filtering based on your Steam Profanity settings"
